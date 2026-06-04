@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROCAL ELETRÔNICA - Controle de Produção</title>
+  
+  <!-- Tailwind CSS CDN para estilização visual rápida e responsiva -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React 18 & ReactDOM 18 CDN para gerenciamento reativo de estado -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel standalone para renderizar JSX diretamente no arquivo HTML estático -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Biblioteca HTML2PDF para exportação de relatórios corporativos diretos em PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    /* Customização fina de barras de rolagem e resets visuais */
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-200">
+  
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo } = React;
+
+    // --- ICON MAP COMPONENT (Substituindo dependência de Lucide-React para funcionamento estável e offline) ---
+    const Icon = ({ name, className = "w-5 h-5" }) => {
+      const paths = {
+        plus: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />,
+        trash: <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />,
+        save: <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />,
+        filedown: <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />,
+        calendar: <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />,
+        clock: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />,
+        database: <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0v3.75" />,
+        checkcircle: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+        alertcircle: <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />,
+        trendingup: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.5 4.5L21.75 7.5M21.75 7.5H16.5M21.75 7.5v5.25" />,
+        filetext: <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />,
+        refresh: <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />,
+        x: <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />,
+        layers: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-4.477a2.25 2.25 0 012.243 0L22.25 12l-8.954 4.477a2.25 2.25 0 01-2.243 0L2.25 12z M2.25 5.75l8.954-4.477a2.25 2.25 0 012.243 0L22.25 5.75 M2.25 18.25l8.954-4.477a2.25 2.25 0 012.243 0L22.25 18.25" />,
+        chevronright: <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />,
+        user: <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />,
+        activity: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />,
+        clipboardlist: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+        wrench: <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.015A3 3 0 0019.122 7.321m-7.702 7.694l-3.321 3.321m3.321-3.321a3 3 0 01-2.222-2.222m1.111-1.111a3 3 0 00-2.222-2.222m3.333 3.333L3.321 19.122M9 19a2 2 0 11-4 0 2 2 0 014 0z" />,
+        shoppingbag: <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />,
+        packageopen: <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21V9.75M3.284 14.253l1.236-4.944a1.5 1.5 0 011.455-1.137h12.05a1.5 1.5 0 011.455 1.137l1.236 4.944M11 9.75V3M13 9.75V3M12 9.75l-4-4M12 9.75l4-4" />
+      };
+
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className={className}>
+          {paths[name] || null}
+        </svg>
+      );
+    };
+
+    // --- LISTAS DE DADOS OFICIAIS ROCAL ---
+    const WIRE_PRODUCTS = [
+      { code: "4244", label: "FIO AWG13 VERDE" },
+      { code: "4245", label: "FIO AWG 13 NATURAL" },
+      { code: "5200", label: "FIO AWG15 NATURAL" },
+      { code: "5201", label: "FIO AWG16 NATURAL" },
+      { code: "5203", label: "FIO AWG19 NATURAL" },
+      { code: "5205", label: "FIO AWG22 NATURAL" },
+      { code: "5215", label: "FIO AWG11 NATURAL" },
+      { code: "5219", label: "FIO . AWG17 NATURAL" },
+      { code: "5234", label: "FIO AWG20 NATURAL" },
+      { code: "5239", label: "FIO AWG20 VERDE" },
+      { code: "5240", label: "FIO AWG22 VERDE" },
+      { code: "5246", label: "FIO AWG17 VERDE" },
+      { code: "5247", label: "FIO AWG15 VERDE" },
+      { code: "5249", label: "FIO AWG16 VERDE" },
+      { code: "5250", label: "FIO AWG22 VERMELHO" },
+      { code: "21658", label: "FIO SUJO" }
+    ];
+
+    const TARA_CAPOTAS = [
+      { size: "SEM CAPOTA", value: "0,000" },
+      { size: "PP", value: "0,090" },
+      { size: "P", value: "0,130" },
+      { size: "M", value: "0,225" },
+      { size: "G", value: "0,330" },
+      { size: "GG", value: "0,560" }
+    ];
+
+    const ORIGEM_DESCARTE = [
+      { code: "1", label: "PROCESSOS DA LINHA" },
+      { code: "2", label: "FALHA OPERACIONAL" },
+      { code: "3", label: "DEFEITO DE FORNECEDOR" }
+    ];
+
+    const getBitola = (label) => {
+      if (label.includes("SUJO")) return "SUJO";
+      const match = label.match(/AWG\s*\d+/i);
+      return match ? match[0].toUpperCase() : "AWG";
+    };
+
+    // --- COMPONENTE PRINCIPAL ---
+    function App() {
+      const [currentDateTime, setCurrentDateTime] = useState(new Date());
+      const [activeSystemTab, setActiveSystemTab] = useState('lancamento');
+
+      const productionLines = {
+        TOROIDE: Array.from({ length: 6 }, (_, i) => `TOROIDE ${i + 1}`),
+        INDUTOR: Array.from({ length: 6 }, (_, i) => `INDUTOR ${i + 1}`),
+        CONECTORES: Array.from({ length: 4 }, (_, i) => `CONECTORES ${i + 1}`)
+      };
+
+      const createEmptyProductionState = () => {
+        const state = {};
+        Object.keys(productionLines).forEach(category => {
+          productionLines[category].forEach(line => {
+            state[line] = [{ codigo: '', quantidade: '' }];
+          });
+        });
+        return state;
+      };
+
+      const [activeProduction, setActiveProduction] = useState(createEmptyProductionState());
+      const [savedHistory, setSavedHistory] = useState([]);
+      const [selectedRecordId, setSelectedRecordId] = useState(null);
+      const [activeCategoryTab, setActiveCategoryTab] = useState('TOROIDE');
+      const [toast, setToast] = useState(null);
+
+      // Estados do Relatório de Descartes de Fio
+      const [wireHistory, setWireHistory] = useState([]);
+      const [newWireInput, setNewWireInput] = useState({
+        fioIndex: '0',
+        quantidade: '',
+        unidade: 'Kg',
+        taraIndex: '0',
+        origemIndex: '0',
+        destino: 'TOROIDE 1',
+        alimentador: ''
+      });
+
+      // Estados das Ordens de Serviço
+      const [serviceOrders, setServiceOrders] = useState([]);
+      const [newOS, setNewOS] = useState({
+        dataEnvio: new Date().toISOString().split('T')[0],
+        descricao: '',
+        alimentador: '',
+        status: 'STANDBY'
+      });
+
+      // Estado dos Pedidos ao Almoxarifado
+      const [almoxarifadoRequests, setAlmoxarifadoRequests] = useState([]);
+      const [newAlmoxarifado, setNewAlmoxarifado] = useState({
+        itemName: '',
+        itemCode: '',
+        quantidade: '',
+        alimentador: '',
+        status: 'PENDENTE'
+      });
+
+      // Modais de segurança customizados
+      const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+      });
+
+      const [saveModal, setSaveModal] = useState({
+        isOpen: false,
+        alimentadorName: ''
+      });
+
+      const reportRef = useRef(null);
+      const scrapTotalsReportRef = useRef(null);
+      const almoxarifadoReportRef = useRef(null);
+
+      useEffect(() => {
+        const timer = setInterval(() => {
+          setCurrentDateTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+      }, []);
+
+      useEffect(() => {
+        // Carregar histórico de produções
+        const localData = localStorage.getItem('producao_salva_historico_v3');
+        if (localData) {
+          try {
+            const parsed = JSON.parse(localData);
+            const sanitized = parsed.map(record => ({
+              ...record,
+              status: record.status || 'NAO_TRANSFERIDO',
+              alimentador: record.alimentador || record.operador || 'NÃO IDENTIFICADO'
+            }));
+            setSavedHistory(sanitized);
+            if (sanitized.length > 0) {
+              setSelectedRecordId(sanitized[0].id);
+            }
+          } catch (e) {
+            console.error("Erro ao carregar histórico", e);
+          }
+        }
+
+        // Carregar histórico de descartes de fios
+        const localWires = localStorage.getItem('producao_descartes_historico_v3');
+        if (localWires) {
+          try {
+            setWireHistory(JSON.parse(localWires));
+          } catch (e) {
+            console.error("Erro ao carregar histórico de descartes", e);
+          }
+        }
+
+        // Carregar histórico de ordens de serviço
+        const localOS = localStorage.getItem('producao_os_historico_v3');
+        if (localOS) {
+          try {
+            setServiceOrders(JSON.parse(localOS));
+          } catch (e) {
+            console.error("Erro ao carregar ordens de serviço", e);
+          }
+        }
+
+        // Carregar histórico de pedidos de Almoxarifado
+        const localAlmoxarifado = localStorage.getItem('producao_almoxarifado_v3');
+        if (localAlmoxarifado) {
+          try {
+            setAlmoxarifadoRequests(JSON.parse(localAlmoxarifado));
+          } catch (e) {
+            console.error("Erro ao carregar pedidos almoxarifado", e);
+          }
+        }
+      }, []);
+
+      const saveToLocalStorage = (newHistory) => {
+        localStorage.setItem('producao_salva_historico_v3', JSON.stringify(newHistory));
+        setSavedHistory(newHistory);
+      };
+
+      const saveWiresToLocalStorage = (newWires) => {
+        localStorage.setItem('producao_descartes_historico_v3', JSON.stringify(newWires));
+        setWireHistory(newWires);
+      };
+
+      const saveOSToLocalStorage = (newOSList) => {
+        localStorage.setItem('producao_os_historico_v3', JSON.stringify(newOSList));
+        setServiceOrders(newOSList);
+      };
+
+      const saveAlmoxarifadoToLocalStorage = (newRequestList) => {
+        localStorage.setItem('producao_almoxarifado_v3', JSON.stringify(newRequestList));
+        setAlmoxarifadoRequests(newRequestList);
+      };
+
+      const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 4000);
+      };
+
+      const addRow = (lineName) => {
+        setActiveProduction(prev => ({
+          ...prev,
+          [lineName]: [...prev[lineName], { codigo: '', quantidade: '' }]
+        }));
+      };
+
+      const removeRow = (lineName, index) => {
+        setActiveProduction(prev => {
+          const updatedLines = [...prev[lineName]];
+          if (updatedLines.length > 1) {
+            updatedLines.splice(index, 1);
+          } else {
+            updatedLines[0] = { codigo: '', quantidade: '' };
+          }
+          return { ...prev, [lineName]: updatedLines };
+        });
+      };
+
+      const handleInputChange = (lineName, index, field, value) => {
+        setActiveProduction(prev => {
+          const updatedLines = [...prev[lineName]];
+          updatedLines[index] = { ...updatedLines[index], [field]: value };
+          return { ...prev, [lineName]: updatedLines };
+        });
+      };
+
+      const requestSaveProduction = () => {
+        let hasData = false;
+        Object.keys(activeProduction).forEach(lineName => {
+          const filtered = activeProduction[lineName].filter(
+            item => item.codigo.trim() !== '' && item.quantidade.trim() !== ''
+          );
+          if (filtered.length > 0) hasData = true;
+        });
+
+        if (!hasData) {
+          showToast("Insira ao menos um código e quantidade válidos!", "error");
+          return;
+        }
+
+        setSaveModal({
+          isOpen: true,
+          alimentadorName: ''
+        });
+      };
+
+      const confirmAndSaveProduction = () => {
+        if (!saveModal.alimentadorName.trim()) {
+          showToast("O nome do alimentador é obrigatório!", "error");
+          return;
+        }
+
+        const cleanData = {};
+        Object.keys(activeProduction).forEach(lineName => {
+          const filtered = activeProduction[lineName].filter(
+            item => item.codigo.trim() !== '' && item.quantidade.trim() !== ''
+          );
+          if (filtered.length > 0) {
+            cleanData[lineName] = filtered.map(item => ({
+              codigo: item.codigo.trim().toUpperCase(),
+              quantidade: parseInt(item.quantidade, 10) || 0
+            }));
+          }
+        });
+
+        const newRecord = {
+          id: 'prod_' + Date.now(),
+          timestamp: new Date().toISOString(),
+          formattedDate: new Date().toLocaleDateString('pt-BR'),
+          formattedTime: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          data: cleanData,
+          status: 'NAO_TRANSFERIDO',
+          alimentador: saveModal.alimentadorName.trim().toUpperCase()
+        };
+
+        const updatedHistory = [newRecord, ...savedHistory];
+        saveToLocalStorage(updatedHistory);
+        setSelectedRecordId(newRecord.id);
+        setActiveProduction(createEmptyProductionState());
+        setSaveModal({ isOpen: false, alimentadorName: '' });
+        showToast("Produção gravada com sucesso!");
+        setActiveSystemTab('historico');
+      };
+
+      const toggleStatus = (id, e) => {
+        if (e) e.stopPropagation();
+        const updatedHistory = savedHistory.map(record => {
+          if (record.id === id) {
+            const nextStatus = record.status === 'TRANSFERIDO' ? 'NAO_TRANSFERIDO' : 'TRANSFERIDO';
+            showToast(nextStatus === 'TRANSFERIDO' ? "Status alterado para TRANSFERIDO" : "Status alterado para NÃO TRANSFERIDO", "info");
+            return { ...record, status: nextStatus };
+          }
+          return record;
+        });
+        saveToLocalStorage(updatedHistory);
+      };
+
+      const requestClearFields = () => {
+        setConfirmModal({
+          isOpen: true,
+          title: 'Limpar Formulário',
+          message: 'Deseja realmente apagar todos os campos de lançamento ativos?',
+          onConfirm: () => {
+            setActiveProduction(createEmptyProductionState());
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+      };
+
+      const requestDeleteRecord = (id, e) => {
+        if (e) e.stopPropagation();
+        setConfirmModal({
+          isOpen: true,
+          title: 'Excluir Registro',
+          message: 'Tem certeza que deseja apagar esta produção permanentemente?',
+          onConfirm: () => {
+            const updatedHistory = savedHistory.filter(record => record.id !== id);
+            saveToLocalStorage(updatedHistory);
+            if (selectedRecordId === id) setSelectedRecordId(updatedHistory.length > 0 ? updatedHistory[0].id : null);
+            showToast("Registro excluído.");
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+      };
+
+      const addWireRecord = (e) => {
+        e.preventDefault();
+        if (!newWireInput.quantidade || !newWireInput.alimentador) {
+          showToast("Preencha a quantidade e o alimentador do descarte!", "error");
+          return;
+        }
+
+        const selectedProduct = WIRE_PRODUCTS[parseInt(newWireInput.fioIndex, 10)];
+        const selectedTara = TARA_CAPOTAS[parseInt(newWireInput.taraIndex, 10)];
+        const selectedOrigem = ORIGEM_DESCARTE[parseInt(newWireInput.origemIndex, 10)];
+
+        const newWire = {
+          id: 'wire_' + Date.now(),
+          timestamp: new Date().toISOString(),
+          formattedDate: new Date().toLocaleDateString('pt-BR'),
+          formattedTime: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          fioCode: selectedProduct.code,
+          fioLabel: selectedProduct.label,
+          taraSize: selectedTara.size,
+          taraValue: selectedTara.value,
+          origemCode: selectedOrigem.code,
+          origemLabel: selectedOrigem.label,
+          quantidade: parseFloat(newWireInput.quantidade) || 0,
+          unidade: newWireInput.unidade,
+          destino: newWireInput.destino,
+          alimentador: newWireInput.alimentador.trim().toUpperCase()
+        };
+
+        const updatedWires = [newWire, ...wireHistory];
+        saveWiresToLocalStorage(updatedWires);
+        setNewWireInput(prev => ({ ...prev, quantidade: '' }));
+        showToast("Descarte de fio registrado com sucesso!");
+      };
+
+      const removeWireRecord = (id) => {
+        setConfirmModal({
+          isOpen: true,
+          title: 'Remover Registro de Descarte',
+          message: 'Deseja excluir esta entrada de descarte de fio?',
+          onConfirm: () => {
+            const updated = wireHistory.filter(item => item.id !== id);
+            saveWiresToLocalStorage(updated);
+            showToast("Registro removido.");
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+      };
+
+      const wireTotals = useMemo(() => {
+        const totals = {};
+        WIRE_PRODUCTS.forEach(wire => {
+          totals[wire.code] = { total: 0, label: wire.label };
+        });
+        wireHistory.forEach(record => {
+          if (totals[record.fioCode] !== undefined) {
+            totals[record.fioCode].total += record.quantidade;
+          }
+        });
+        return totals;
+      }, [wireHistory]);
+
+      const addServiceOrder = (e) => {
+        e.preventDefault();
+        if (!newOS.descricao.trim() || !newOS.alimentador.trim()) {
+          showToast("Preencha a descrição do serviço e o nome do alimentador!", "error");
+          return;
+        }
+
+        const order = {
+          id: 'os_' + Date.now(),
+          dataEnvio: newOS.dataEnvio,
+          descricao: newOS.descricao.trim(),
+          alimentador: newOS.alimentador.trim().toUpperCase(),
+          status: newOS.status,
+          timestamp: new Date().toISOString()
+        };
+
+        const updated = [order, ...serviceOrders];
+        saveOSToLocalStorage(updated);
+        setNewOS({
+          dataEnvio: new Date().toISOString().split('T')[0],
+          descricao: '',
+          alimentador: '',
+          status: 'STANDBY'
+        });
+        showToast("Ordem de Serviço cadastrada!");
+      };
+
+      const removeServiceOrder = (id) => {
+        setConfirmModal({
+          isOpen: true,
+          title: 'Remover Ordem de Serviço',
+          message: 'Deseja realmente excluir esta Ordem de Serviço permanentemente?',
+          onConfirm: () => {
+            const updated = serviceOrders.filter(os => os.id !== id);
+            saveOSToLocalStorage(updated);
+            showToast("Ordem de serviço removida.");
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+      };
+
+      const cycleOSStatus = (id) => {
+        const nextStatusMap = {
+          'STANDBY': 'ENVIADO',
+          'ENVIADO': 'REALIZADO',
+          'REALIZADO': 'STANDBY'
+        };
+        
+        const updated = serviceOrders.map(os => {
+          if (os.id === id) {
+            const next = nextStatusMap[os.status];
+            showToast(`Ordem de Serviço atualizada para ${next}`, 'info');
+            return { ...os, status: next };
+          }
+          return os;
+        });
+        saveOSToLocalStorage(updated);
+      };
+
+      const addAlmoxarifadoRequest = (e) => {
+        e.preventDefault();
+        if (!newAlmoxarifado.itemName.trim() || !newAlmoxarifado.quantidade || !newAlmoxarifado.alimentador.trim()) {
+          showToast("Preencha o nome do item, quantidade e alimentador solicitante!", "error");
+          return;
+        }
+
+        const request = {
+          id: 'almox_' + Date.now(),
+          itemName: newAlmoxarifado.itemName.trim().toUpperCase(),
+          itemCode: newAlmoxarifado.itemCode.trim().toUpperCase() || 'SEM CÓDIGO',
+          quantidade: parseInt(newAlmoxarifado.quantidade, 10) || 0,
+          alimentador: newAlmoxarifado.alimentador.trim().toUpperCase(),
+          status: newAlmoxarifado.status,
+          timestamp: new Date().toISOString(),
+          formattedDate: new Date().toLocaleDateString('pt-BR')
+        };
+
+        const updated = [request, ...almoxarifadoRequests];
+        saveAlmoxarifadoToLocalStorage(updated);
+        setNewAlmoxarifado({
+          itemName: '',
+          itemCode: '',
+          quantidade: '',
+          alimentador: '',
+          status: 'PENDENTE'
+        });
+        showToast("Pedido ao Almoxarifado registrado com sucesso!");
+      };
+
+      const removeAlmoxarifadoRequest = (id) => {
+        setConfirmModal({
+          isOpen: true,
+          title: 'Excluir Pedido ao Almoxarifado',
+          message: 'Tem certeza que deseja apagar este pedido?',
+          onConfirm: () => {
+            const updated = almoxarifadoRequests.filter(req => req.id !== id);
+            saveAlmoxarifadoToLocalStorage(updated);
+            showToast("Pedido removido.");
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          }
+        });
+      };
+
+      const cycleAlmoxarifadoStatus = (id) => {
+        const nextStatusMap = {
+          'PENDENTE': 'EM SEPARAÇÃO',
+          'EM SEPARAÇÃO': 'ENTREGUE',
+          'ENTREGUE': 'PENDENTE'
+        };
+
+        const updated = almoxarifadoRequests.map(req => {
+          if (req.id === id) {
+            const next = nextStatusMap[req.status];
+            showToast(`Pedido de ${req.itemName} alterado para ${next}`, 'info');
+            return { ...req, status: next };
+          }
+          return req;
+        });
+        saveAlmoxarifadoToLocalStorage(updated);
+      };
+
+      const exportToPdf = () => {
+        const selectedRecord = savedHistory.find(r => r.id === selectedRecordId);
+        if (!selectedRecord) return;
+        showToast("Gerando PDF ROCAL...", "info");
+        const opt = {
+          margin: [15, 15, 20, 15],
+          filename: `Relatorio_ROCAL_${selectedRecord.formattedDate.replace(/\//g, '-')}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(reportRef.current).save().then(() => showToast("Download do PDF de produção concluído!"));
+      };
+
+      const exportScrapTotalsToPdf = () => {
+        showToast("Gerando PDF de Totais...", "info");
+        const opt = {
+          margin: [15, 15, 20, 15],
+          filename: `Relatorio_Consolidado_Descartes_ROCAL.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(scrapTotalsReportRef.current).save().then(() => showToast("Download concluído!"));
+      };
+
+      const exportAlmoxarifadoToPdf = () => {
+        if (almoxarifadoRequests.length === 0) {
+          showToast("Não há pedidos de almoxarifado para exportar!", "error");
+          return;
+        }
+        showToast("Gerando PDF do Almoxarifado...", "info");
+        const opt = {
+          margin: [15, 15, 20, 15],
+          filename: `Relatorio_Pedidos_Almoxarifado_ROCAL.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(almoxarifadoReportRef.current).save().then(() => showToast("Download concluído!"));
+      };
+
+      const activeRecord = savedHistory.find(r => r.id === selectedRecordId);
+
+      function getRecordStats(record) {
+        if (!record) return { totalItens: 0, totalPecas: 0, linhasAtivas: 0 };
+        let totalItens = 0, totalPecas = 0;
+        const linhasAtivas = Object.keys(record.data).length;
+        Object.values(record.data).forEach(items => {
+          totalItens += items.length;
+          items.forEach(item => totalPecas += item.quantidade);
+        });
+        return { totalItens, totalPecas, linhasAtivas };
+      }
+
+      const selectedStats = getRecordStats(activeRecord);
+
+      return (
+        <div className="min-h-screen bg-zinc-950 text-zinc-200 flex flex-col font-sans selection:bg-sky-500 selection:text-zinc-950 relative">
+          
+          {/* BACKGROUND LAYER */}
+          <div 
+            className="fixed inset-0 z-0 opacity-15 pointer-events-none"
+            style={{
+              backgroundImage: "url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundAttachment: 'fixed'
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/80 via-zinc-950/90 to-zinc-950/95"></div>
+          </div>
+          
+          {/* MODAL CONFIRMAÇÃO */}
+          {confirmModal.isOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+              <div className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl">
+                <div className="p-6">
+                  <h3 className="text-lg font-black uppercase text-sky-400 tracking-tighter">{confirmModal.title}</h3>
+                  <p className="mt-2 text-sm text-zinc-400">{confirmModal.message}</p>
+                </div>
+                <div className="p-4 bg-zinc-900/50 flex justify-end gap-3 rounded-b-2xl">
+                  <button onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} className="px-4 py-2 text-xs font-bold uppercase text-zinc-400 hover:text-white transition-colors">Cancelar</button>
+                  <button onClick={confirmModal.onConfirm} className="px-5 py-2 bg-sky-500 hover:bg-sky-400 text-zinc-950 rounded-xl text-xs font-black uppercase transition-all">Confirmar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL NOME DO ALIMENTADOR */}
+          {saveModal.isOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+              <div className="bg-zinc-950 border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl p-6">
+                <h3 className="text-sm font-black uppercase text-sky-400 tracking-wider mb-2">Identificação do Alimentador</h3>
+                <p className="text-xs text-zinc-400 mb-4 font-medium">Insira o seu nome completo ou registro para assinar este relatório de produção.</p>
+                <input
+                  type="text"
+                  placeholder="NOME COMPLETO DO ALIMENTADOR"
+                  value={saveModal.alimentadorName}
+                  onChange={e => setSaveModal(prev => ({ ...prev, alimentadorName: e.target.value.toUpperCase() }))}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-200 focus:ring-1 focus:ring-sky-500 outline-none font-bold mb-5"
+                />
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setSaveModal({ isOpen: false, alimentadorName: '' })}
+                    className="px-4 py-2 text-xs font-bold uppercase text-zinc-500 hover:text-white transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={confirmAndSaveProduction}
+                    disabled={!saveModal.alimentadorName.trim()}
+                    className="px-5 py-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-40 disabled:hover:bg-sky-500 text-zinc-950 rounded-xl text-xs font-black uppercase transition-all"
+                  >
+                    Gravar e Assinar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {}
+          {/* TOASTS */}
+          {toast && (
+            <div className={`fixed top-4 right-4 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl border transition-all duration-300 ${
+              toast.type === 'error' ? 'bg-red-950/95 border-red-800 text-red-200' : 'bg-zinc-850/95 border-sky-500/50 text-sky-100'
+            }`}>
+              {toast.type === 'error' ? <Icon name="alertcircle" className="w-5 h-5 text-red-400" /> : <Icon name="checkcircle" className="w-5 h-5 text-emerald-400" />}
+              <span className="text-sm font-bold">{toast.message}</span>
+            </div>
+          )}
+
+          {/* HEADER: ROCAL em Amarelo, ELETRÔNICA em cinza claro, assim como Data e Hora na mesma cor */}
+          <header className="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-40 backdrop-blur-md">
+            <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-5">
+                {/* LOGO RE GEOMÉTRICO CINZA CLARO METÁLICO (image_86adc2.png) */}
+                <div className="relative w-16 h-16 flex items-center justify-center">
+                  <div className="absolute inset-0 border-2 border-zinc-600 border-dashed rounded-full animate-spin"></div>
+                  <div className="absolute inset-1.5 border border-zinc-700/60 rounded-full animate-[spin_10s_linear_infinite_reverse]"></div>
+                  
+                  <div className="w-12 h-12 bg-zinc-400 rounded-full flex items-center justify-center shadow-lg border border-zinc-500 relative overflow-hidden">
+                    <div className="flex items-center justify-center font-black italic tracking-tighter text-[28px] leading-none select-none">
+                      <span className="text-black transform -skew-x-12 translate-x-1 z-10 font-black">R</span>
+                      <span className="text-yellow-500 transform -skew-x-12 -translate-x-0.5 font-black drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)]">E</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-xl font-black tracking-tighter leading-none uppercase">
+                    <span className="text-yellow-400">ROCAL</span> <span className="text-zinc-300">ELETRÔNICA</span>
+                  </h1>
+                  <p className="text-[9px] text-zinc-500 font-black uppercase tracking-[0.2em] mt-1">Industrial Production Systems</p>
+                </div>
+              </div>
+              
+              {/* Caixa de Data e Hora */}
+              <div className="flex items-center gap-4 bg-zinc-900 px-4 py-1.5 rounded-xl border border-zinc-800">
+                <div className="flex items-center gap-2 text-zinc-400">
+                  <Icon name="calendar" className="w-3.5 h-3.5 text-yellow-400" />
+                  <span className="text-xs font-bold text-zinc-300">{currentDateTime.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                </div>
+                <div className="flex items-center gap-2 text-yellow-400 font-mono font-black text-xs">
+                  <Icon name="clock" className="w-3.5 h-3.5 text-zinc-500" />
+                  <span>{currentDateTime.toLocaleTimeString('pt-BR')}</span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {}
+          {/* NAVEGAÇÃO PRINCIPAL (Abas separadas em cinza escuro/claro, selecionada em azul claro) */}
+          <nav className="bg-zinc-950/20 border-b border-zinc-800 p-2 sticky top-[72px] z-30 backdrop-blur">
+            <div className="max-w-5xl mx-auto flex flex-wrap gap-2">
+              <button 
+                onClick={() => setActiveSystemTab('lancamento')} 
+                className={`flex-1 min-w-[120px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeSystemTab === 'lancamento' 
+                    ? 'bg-sky-600 text-white border border-sky-500' 
+                    : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                Lançamento
+              </button>
+              <button 
+                onClick={() => setActiveSystemTab('historico')} 
+                className={`flex-1 min-w-[120px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeSystemTab === 'historico' 
+                    ? 'bg-sky-600 text-white border border-sky-500' 
+                    : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                Histórico ({savedHistory.length})
+              </button>
+              <button 
+                onClick={() => setActiveSystemTab('fios')} 
+                className={`flex-1 min-w-[120px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeSystemTab === 'fios' 
+                    ? 'bg-sky-600 text-white border border-sky-500' 
+                    : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                Relatório de Descartes
+              </button>
+              <button 
+                onClick={() => setActiveSystemTab('ordens_servico')} 
+                className={`flex-1 min-w-[120px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeSystemTab === 'ordens_servico' 
+                    ? 'bg-sky-600 text-white border border-sky-500' 
+                    : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                Ordens de Serviço
+              </button>
+              <button 
+                onClick={() => setActiveSystemTab('pedidos')} 
+                className={`flex-1 min-w-[120px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  activeSystemTab === 'pedidos' 
+                    ? 'bg-sky-600 text-white border border-sky-500' 
+                    : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                Pedidos
+              </button>
+            </div>
+          </nav>
+
+          {}
+          {/* CONTEÚDO */}
+          <main className="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col justify-start">
+            
+            {/* ABA: LANÇAMENTO (Compactada para evitar rolagem - image_84e4a6.png) */}
+            {activeSystemTab === 'lancamento' && (
+              <div className="max-w-4xl mx-auto w-full bg-zinc-950/40 rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden flex flex-col">
+                <div className="p-3 bg-zinc-950/80 border-b border-zinc-800 flex justify-center gap-2">
+                  {Object.keys(productionLines).map(cat => (
+                    <button key={cat} onClick={() => setActiveCategoryTab(cat)} className={`px-5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${activeCategoryTab === cat ? 'bg-zinc-800 text-sky-400 border border-sky-500/10' : 'text-zinc-500 hover:text-zinc-300'}`}>{cat}</button>
+                  ))}
+                </div>
+
+                <div className="p-4 max-h-[50vh] overflow-y-auto space-y-4 scrollbar-hide">
+                  {productionLines[activeCategoryTab].map(line => (
+                    <div key={line} className="bg-zinc-900/40 rounded-xl p-3 border border-zinc-800/40">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-[11px] font-black text-zinc-400 uppercase tracking-wider">{line}</span>
+                        <button onClick={() => addRow(line)} className="px-2.5 py-0.5 bg-sky-500/5 hover:bg-sky-500/10 text-sky-400 rounded-lg text-[9px] font-black uppercase border border-sky-500/10 transition-all">+ Item</button>
+                      </div>
+                      <div className="space-y-2">
+                        {activeProduction[line].map((row, idx) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <input type="text" placeholder="CÓDIGO" value={row.codigo} onChange={e => handleInputChange(line, idx, 'codigo', e.target.value.toUpperCase())} className="flex-1 bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:ring-1 focus:ring-sky-500/40 outline-none font-mono" />
+                            <input type="number" placeholder="QTD" value={row.quantidade} onChange={e => handleInputChange(line, idx, 'quantidade', e.target.value)} className="w-24 bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:ring-1 focus:ring-sky-500/40 outline-none font-bold" />
+                            <button onClick={() => removeRow(line, idx)} className="p-1.5 text-zinc-600 hover:text-red-500 transition-colors" title="Deletar linha"><Icon name="trash" className="w-3.5 h-3.5" /></button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-3 bg-zinc-950/80 border-t border-zinc-800 flex justify-between items-center">
+                  <button onClick={requestClearFields} className="px-4 py-2 text-[10px] font-black uppercase text-zinc-500 hover:text-zinc-200 transition-all">Limpar Tudo</button>
+                  <button onClick={requestSaveProduction} className="px-8 py-2.5 bg-sky-500 hover:bg-sky-400 text-zinc-950 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-sky-500/10">Gravar Produção</button>
+                </div>
+              </div>
+            )}
+
+            {}
+            {/* ABA: HISTÓRICO */}
+            {activeSystemTab === 'historico' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <div className="lg:col-span-4 space-y-2 overflow-y-auto max-h-[65vh] pr-1 scrollbar-hide">
+                  {savedHistory.map(record => {
+                    const isSelected = selectedRecordId === record.id;
+                    const stats = getRecordStats(record);
+                    const isTransferido = record.status === 'TRANSFERIDO';
+                    return (
+                      <div key={record.id} onClick={() => setSelectedRecordId(record.id)} className={`p-3 rounded-xl border transition-all cursor-pointer flex justify-between items-center ${isSelected ? 'bg-zinc-800 border-sky-500/30' : 'bg-zinc-950/40 border-zinc-800 hover:border-zinc-700'}`}>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black text-zinc-200">{record.formattedDate}</span>
+                            <span className="text-[8px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">{record.formattedTime}</span>
+                          </div>
+                          <div className="text-[9px] text-zinc-400 mt-1 font-semibold flex items-center gap-1 uppercase">
+                            <Icon name="user" className="w-3 h-3 text-zinc-500" />
+                            <span>Alimentador: {record.alimentador || 'N/A'}</span>
+                          </div>
+                          <div className="text-[9px] font-black uppercase mt-1">
+                            Peças: <span className="text-zinc-100">{stats.totalPecas}</span> • STATUS:{' '}
+                            <span className={isTransferido ? 'text-emerald-400 font-black' : 'text-red-500 font-black'}>
+                              {isTransferido ? '✓' : '✗'}
+                            </span>
+                          </div>
+                        </div>
+                        <Icon name="chevronright" className={`w-3.5 h-3.5 ${isSelected ? 'text-sky-500' : 'text-zinc-700'}`} />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="lg:col-span-8 bg-zinc-950/40 rounded-2xl border border-zinc-800 min-h-[400px] flex flex-col">
+                  {activeRecord ? (
+                    <>
+                      <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950/40">
+                        <h2 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Relatório Técnico</h2>
+                        <button onClick={exportToPdf} className="flex items-center gap-1.5 px-4 py-1.5 bg-sky-500 text-zinc-950 rounded-lg text-[9px] font-black uppercase shadow-lg shadow-sky-500/10 transition-all"><Icon name="filedown" className="w-3.5 h-3.5" /> PDF</button>
+                      </div>
+                      <div className="p-5 flex-1 space-y-4">
+                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-900/60 p-4 rounded-xl border border-zinc-800">
+                          
+                          <div 
+                            onClick={() => toggleStatus(activeRecord.id)} 
+                            className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest border cursor-pointer select-none transition-all ${
+                              activeRecord.status === 'TRANSFERIDO' 
+                                ? 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30 hover:bg-emerald-950/50' 
+                                : 'bg-red-950/30 text-red-500 border-red-500/30 hover:bg-red-950/50'
+                            }`}
+                            title="Clique para alterar"
+                          >
+                            {activeRecord.status === 'TRANSFERIDO' ? '✓ TRANSFERIDO' : '✗ NÃO TRANSFERIDO'}
+                          </div>
+
+                          <div className="flex gap-4 text-center">
+                            <div>
+                              <span className="block text-[8px] text-zinc-500 font-black uppercase">Alimentador</span>
+                              <span className="text-xs font-bold text-zinc-300">{activeRecord.alimentador || 'NÃO IDENTIFICADO'}</span>
+                            </div>
+                            <div className="px-4 border-x border-zinc-800">
+                              <span className="block text-[8px] text-sky-600 font-black uppercase font-black">Total Peças</span>
+                              <span className="text-sm font-black text-sky-400">{selectedStats.totalPecas}</span>
+                            </div>
+                            <div><span className="block text-[8px] text-zinc-500 font-black uppercase font-black">Setores</span><span className="text-sm font-black text-zinc-300">{selectedStats.linhasAtivas}</span></div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {Object.keys(activeRecord.data).map(line => (
+                            <div key={line} className="p-3 bg-zinc-900/20 rounded-xl border border-zinc-800/50">
+                              <h4 className="text-[9px] font-black text-sky-400 uppercase tracking-widest mb-2">{line}</h4>
+                              <div className="space-y-1">
+                                {activeRecord.data[line].map((item, i) => (
+                                  <div key={i} className="flex justify-between text-[10.5px] py-0.5 border-b border-zinc-800/40 last:border-0 font-mono">
+                                    <span className="text-zinc-400">{item.codigo}</span>
+                                    <span className="text-zinc-200 font-bold">{item.quantidade} UN</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="pt-4 flex justify-end">
+                          <button onClick={e => requestDeleteRecord(activeRecord.id, e)} className="text-[9px] font-black text-red-900 hover:text-red-500 uppercase transition-colors">Excluir Lote</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-700 py-20">
+                      <Icon name="filetext" className="w-10 h-10 opacity-10 mb-2" />
+                      <p className="text-[9px] font-black uppercase tracking-widest">Selecione um registro no histórico</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {}
+            {/* ABA: RELATÓRIO DE DESCARTE DE FIOS */}
+            {activeSystemTab === 'fios' && (
+              <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                {/* Form de Lançamento de Descarte */}
+                <div className="lg:col-span-5 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Icon name="activity" className="w-4 h-4 text-sky-400" />
+                    <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Lançar Descarte de Fio</h3>
+                  </div>
+                  <form onSubmit={addWireRecord} className="space-y-3">
+                    
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Fio (Código / Descrição)</label>
+                      <select 
+                        value={newWireInput.fioIndex}
+                        onChange={e => setNewWireInput(prev => ({ ...prev, fioIndex: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none"
+                      >
+                        {WIRE_PRODUCTS.map((wire, idx) => (
+                          <option key={wire.code} value={idx}>{wire.code} - {wire.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Tara da Capota</label>
+                        <select 
+                          value={newWireInput.taraIndex}
+                          onChange={e => setNewWireInput(prev => ({ ...prev, taraIndex: e.target.value }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none"
+                        >
+                          {TARA_CAPOTAS.map((tara, idx) => (
+                            <option key={tara.size} value={idx}>{tara.size} ({tara.value} Kg)</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Origem do Descarte</label>
+                        <select 
+                          value={newWireInput.origemIndex}
+                          onChange={e => setNewWireInput(prev => ({ ...prev, origemIndex: e.target.value }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none"
+                        >
+                          {ORIGEM_DESCARTE.map((origem, idx) => (
+                            <option key={origem.code} value={idx}>{origem.code} - {origem.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Qtd Descartada</label>
+                        <input 
+                          type="number" 
+                          step="0.001" 
+                          placeholder="0.000"
+                          value={newWireInput.quantidade}
+                          onChange={e => setNewWireInput(prev => ({ ...prev, quantidade: e.target.value }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Unidade</label>
+                        <select 
+                          value={newWireInput.unidade}
+                          onChange={e => setNewWireInput(prev => ({ ...prev, unidade: e.target.value }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none"
+                        >
+                          <option>Kg</option>
+                          <option>Metros</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Destino / Linha</label>
+                      <select 
+                        value={newWireInput.destino}
+                        onChange={e => setNewWireInput(prev => ({ ...prev, destino: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none"
+                      >
+                        {Object.keys(productionLines).flatMap(cat => 
+                          productionLines[cat].map(line => (
+                            <option key={line} value={line}>{line}</option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Alimentador Responsável</label>
+                      <input 
+                        type="text" 
+                        placeholder="NOME DO ALIMENTADOR"
+                        value={newWireInput.alimentador}
+                        onChange={e => setNewWireInput(prev => ({ ...prev, alimentador: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none uppercase"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="w-full py-2.5 bg-sky-500 hover:bg-sky-400 text-zinc-950 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-lg"
+                    >
+                      Registrar Descarte
+                    </button>
+                  </form>
+                </div>
+
+                {/* Listagem Simplificada de Histórico (Fios) - image_84dd04.png e image_847f2c.png */}
+                <div className="lg:col-span-7 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800 flex flex-col h-full min-h-[350px]">
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Histórico de Descarte de Fios</h3>
+                      <span className="text-[9px] text-zinc-500 font-bold">{wireHistory.length} registros</span>
+                    </div>
+                    <button 
+                      onClick={exportScrapTotalsToPdf}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-sky-400 border border-zinc-700 rounded-xl text-[9px] font-black uppercase transition-all"
+                      title="Exportar totais de cada fio para PDF"
+                    >
+                      <Icon name="filedown" className="w-3.5 h-3.5" /> Totais (PDF)
+                    </button>
+                  </div>
+
+                  {/* Lista com as informações simplificadas, incluindo o alimentador conforme image_847f2c.png */}
+                  <div className="flex-1 overflow-y-auto max-h-[40vh] space-y-2 pr-1 scrollbar-hide">
+                    {wireHistory.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center py-10 text-zinc-600">
+                        <Icon name="layers" className="w-8 h-8 mb-2 opacity-10" />
+                        <p className="text-[8px] font-black uppercase tracking-widest">Nenhum descarte de fio registrado.</p>
+                      </div>
+                    ) : (
+                      wireHistory.map(wire => (
+                        <div key={wire.id} className="p-2.5 bg-zinc-900/30 rounded-xl border border-zinc-800/60 flex items-center justify-between gap-3">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black text-sky-400">{wire.fioLabel}</span>
+                              <span className="text-[8px] bg-zinc-900 px-1 py-0.5 rounded text-zinc-500 font-bold">{wire.formattedDate}</span>
+                            </div>
+                            <div className="text-[10px] text-zinc-300 font-mono">
+                              Descartado: <span className="font-bold text-zinc-100">{wire.quantidade} {wire.unidade}</span> | Linha: {wire.destino} | Alimentador: <span className="font-semibold text-sky-400">{wire.alimentador}</span>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => removeWireRecord(wire.id)} 
+                            className="text-zinc-600 hover:text-red-500 p-1.5 transition-colors"
+                            title="Excluir"
+                          >
+                            <Icon name="trash" className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* GRADE EM QUADRADOS DOS FIOS COM TOTAL ACUMULADO E INFORMAÇÃO DE BITOLA (image_847e52.png) */}
+                <div className="lg:col-span-12">
+                  <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider mb-2">Painel de Estoque e Descarte Consolidado</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                    {WIRE_PRODUCTS.map(wire => {
+                      const accum = wireTotals[wire.code]?.total || 0;
+                      const isVerde = wire.label.includes("VERDE");
+                      const isVermelho = wire.label.includes("VERMELHO");
+                      const badgeColor = isVerde 
+                        ? 'border-emerald-800 text-emerald-400 bg-emerald-950/20' 
+                        : isVermelho 
+                        ? 'border-red-900 text-red-400 bg-red-950/20' 
+                        : 'border-zinc-800 text-zinc-400 bg-zinc-900/20';
+
+                      return (
+                        <div key={wire.code} className="bg-zinc-950/40 border border-zinc-800 rounded-xl p-2.5 text-center flex flex-col justify-between items-center shadow-inner hover:border-zinc-700 transition-colors">
+                          <span className="text-xs font-black tracking-tight text-zinc-100">{wire.code}</span>
+                          <span className="text-[9px] font-bold text-zinc-400 font-mono mt-0.5">{getBitola(wire.label)}</span>
+                          <span className={`text-[8px] px-1.5 py-0.5 rounded-md border font-black uppercase my-1 truncate max-w-full ${badgeColor}`}>
+                            {isVerde ? 'Verde' : isVermelho ? 'Vermelho' : 'Natural'}
+                          </span>
+                          <span className="text-xs font-mono font-black text-sky-400">
+                            {accum.toFixed(3)} <span className="text-[9px] text-zinc-500 font-bold">Kg</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {}
+            {/* ABA: ORDENS DE SERVIÇO */}
+            {activeSystemTab === 'ordens_servico' && (
+              <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-5 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Icon name="wrench" className="w-4 h-4 text-sky-400" />
+                    <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider font-black">Nova Ordem de Serviço</h3>
+                  </div>
+                  <form onSubmit={addServiceOrder} className="space-y-3">
+                    
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Data de Envio</label>
+                      <input 
+                        type="date" 
+                        value={newOS.dataEnvio}
+                        onChange={e => setNewOS(prev => ({ ...prev, dataEnvio: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Descrição do Serviço (O que fazer)</label>
+                      <textarea 
+                        rows="3"
+                        placeholder="Descreva detalhadamente o serviço..."
+                        value={newOS.descricao}
+                        onChange={e => setNewOS(prev => ({ ...prev, descricao: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs font-medium text-zinc-200 focus:outline-none resize-none"
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Alimentador Solicitante</label>
+                      <input 
+                        type="text" 
+                        placeholder="NOME DO ALIMENTADOR"
+                        value={newOS.alimentador}
+                        onChange={e => setNewOS(prev => ({ ...prev, alimentador: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none uppercase"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Status Inicial</label>
+                      <select 
+                        value={newOS.status}
+                        onChange={e => setNewOS(prev => ({ ...prev, status: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none"
+                      >
+                        <option value="STANDBY">STANDBY (Aguardando)</option>
+                        <option value="ENVIADO">ENVIADO (Em rota/trânsito)</option>
+                        <option value="REALIZADO">REALIZADO (Concluído)</option>
+                      </select>
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="w-full py-2 bg-sky-500 hover:bg-sky-400 text-zinc-950 font-black text-[9px] uppercase tracking-wider rounded-xl transition-all shadow-lg mt-2"
+                    >
+                      Abrir Ordem de Serviço
+                    </button>
+                  </form>
+                </div>
+
+                <div className="lg:col-span-7 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800 flex flex-col h-full min-h-[350px]">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider font-black">Quadro de Atividades</h3>
+                    <span className="text-[9px] bg-zinc-900 px-2.5 py-1 border border-zinc-800 rounded-lg text-zinc-400 font-bold">
+                      {serviceOrders.length} abertas
+                    </span>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto max-h-[45vh] space-y-2 pr-1 scrollbar-hide">
+                    {serviceOrders.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center py-10 text-zinc-600">
+                        <Icon name="clipboardlist" className="w-8 h-8 mb-2 opacity-10" />
+                        <p className="text-[8px] font-black uppercase tracking-widest">Nenhuma ordem de serviço aberta.</p>
+                      </div>
+                    ) : (
+                      serviceOrders.map(os => {
+                        const statusConfig = {
+                          'STANDBY': { bg: 'bg-amber-950/30 text-amber-400 border-amber-500/30', label: 'STANDBY' },
+                          'ENVIADO': { bg: 'bg-blue-950/30 text-blue-400 border-blue-500/30', label: 'ENVIADO' },
+                          'REALIZADO': { bg: 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30', label: 'REALIZADO' }
+                        }[os.status] || { bg: 'bg-zinc-800 text-zinc-400', label: 'INDEFINIDO' };
+
+                        return (
+                          <div key={os.id} className="p-3 bg-zinc-900/30 rounded-xl border border-zinc-800/60 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center flex-wrap gap-2">
+                                <span className="text-[8px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold flex items-center gap-1">
+                                  <Icon name="calendar" className="w-3 h-3" /> Envio: {os.dataEnvio.split('-').reverse().join('/')}
+                                </span>
+                                <span className="text-[9px] text-sky-400 font-black">ALIMENTADOR: {os.alimentador || 'N/A'}</span>
+                              </div>
+                              
+                              <p className="text-[11px] text-zinc-300 mt-2 font-medium whitespace-pre-wrap leading-relaxed bg-zinc-950/30 p-2.5 rounded-lg border border-zinc-800/40">
+                                {os.descricao}
+                              </p>
+                            </div>
+
+                            <div className="flex sm:flex-col items-end gap-2">
+                              <button
+                                onClick={() => cycleOSStatus(os.id)}
+                                className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest border transition-all ${statusConfig.bg}`}
+                              >
+                                ● {statusConfig.label}
+                              </button>
+                              <button 
+                                onClick={() => removeServiceOrder(os.id)} 
+                                className="text-zinc-600 hover:text-red-500 p-1.5 transition-all self-end"
+                              >
+                                <Icon name="trash" className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {}
+            {/* ABA: PEDIDOS */}
+            {activeSystemTab === 'pedidos' && (
+              <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-5 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Icon name="shoppingbag" className="w-4 h-4 text-sky-400" />
+                    <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Novo Pedido Almoxarifado</h3>
+                  </div>
+                  <form onSubmit={addAlmoxarifadoRequest} className="space-y-3">
+                    
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Nome do Item</label>
+                      <input 
+                        type="text" 
+                        placeholder="NOME DO MATERIAL"
+                        value={newAlmoxarifado.itemName}
+                        onChange={e => setNewAlmoxarifado(prev => ({ ...prev, itemName: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none uppercase"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Código do Item</label>
+                        <input 
+                          type="text" 
+                          placeholder="EX: 4244"
+                          value={newAlmoxarifado.itemCode}
+                          onChange={e => setNewAlmoxarifado(prev => ({ ...prev, itemCode: e.target.value }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none uppercase"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Quantidade</label>
+                        <input 
+                          type="number" 
+                          placeholder="EX: 50"
+                          value={newAlmoxarifado.quantidade}
+                          onChange={e => setNewAlmoxarifado(prev => ({ ...prev, quantidade: e.target.value }))}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Alimentador Solicitante</label>
+                      <input 
+                        type="text" 
+                        placeholder="NOME DO ALIMENTADOR"
+                        value={newAlmoxarifado.alimentador}
+                        onChange={e => setNewAlmoxarifado(prev => ({ ...prev, alimentador: e.target.value }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none uppercase"
+                      />
+                    </div>
+
+                    <button 
+                      type="submit"
+                      className="w-full py-2 bg-sky-500 hover:bg-sky-400 text-zinc-950 font-black text-[9px] uppercase tracking-wider rounded-xl transition-all shadow-lg mt-2"
+                    >
+                      Enviar para Almoxarifado
+                    </button>
+                  </form>
+                </div>
+
+                <div className="lg:col-span-7 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800 flex flex-col h-full min-h-[350px]">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Histórico de Pedidos ao Almoxarifado</h3>
+                      <span className="text-[9px] text-zinc-500 font-bold">{almoxarifadoRequests.length} solicitações</span>
+                    </div>
+                    <button 
+                      onClick={exportAlmoxarifadoToPdf}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-sky-400 border border-zinc-700 rounded-xl text-[9px] font-black uppercase transition-all"
+                    >
+                      <Icon name="filedown" className="w-3.5 h-3.5" /> PDF
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto max-h-[45vh] space-y-2 pr-1 scrollbar-hide">
+                    {almoxarifadoRequests.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center py-10 text-zinc-600">
+                        <Icon name="packageopen" className="w-8 h-8 mb-2 opacity-10" />
+                        <p className="text-[8px] font-black uppercase tracking-widest">Nenhum pedido ao Almoxarifado registrado.</p>
+                      </div>
+                    ) : (
+                      almoxarifadoRequests.map(req => {
+                        const statusColor = {
+                          'PENDENTE': 'bg-amber-950/30 text-amber-400 border-amber-500/30',
+                          'EM SEPARAÇÃO': 'bg-blue-950/30 text-blue-400 border-blue-500/30',
+                          'ENTREGUE': 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30'
+                        }[req.status] || 'bg-zinc-850 text-zinc-300';
+
+                        return (
+                          <div key={req.id} className="p-3 bg-zinc-900/30 rounded-xl border border-zinc-800/60 flex items-center justify-between gap-3">
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-black text-sky-400">{req.itemName}</span>
+                                <span className="text-[9px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">Cód: {req.itemCode}</span>
+                                <span className="text-[9px] text-zinc-400 font-bold">{req.formattedDate}</span>
+                              </div>
+                              <div className="text-[10px] text-zinc-300 font-mono">
+                                Quantidade: <span className="font-bold text-zinc-100">{req.quantidade} UN</span> | Alimentador: {req.alimentador}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => cycleAlmoxarifadoStatus(req.id)}
+                                className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest border transition-all ${statusColor}`}
+                              >
+                                ● {req.status}
+                              </button>
+                              <button 
+                                onClick={() => removeAlmoxarifadoRequest(req.id)} 
+                                className="text-zinc-600 hover:text-red-500 p-1.5 transition-colors"
+                              >
+                                <Icon name="trash" className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
+
+          {}
+          {/* FOOTER INFORMATIVO DA FÁBRICA */}
+          <footer className="bg-[#0b0c10] border-t border-[#1a1d29] px-4 py-2 mt-auto text-center text-[10px] font-bold text-[#475569] tracking-wider uppercase">
+            ROCAL ELETRÔNICA © 2026 | Sistema Integrado de Controle Operacional de Chão de Fábrica v5.0
+          </footer>
+
+          {/* SEÇÕES DE TEMPLATES PARA EXPORTAÇÃO PDF (OCULTAS) */}
+          <div className="hidden">
+            
+            {/* PDF 1: Relatório de Produção Detalhado */}
+            <div ref={reportRef} style={{ padding: '30px', color: '#18181b', fontFamily: 'sans-serif' }}>
+              {activeRecord && (
+                <div style={{ border: '2px solid #e4e4e7', padding: '30px', borderRadius: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #27272a', paddingBottom: '15px' }}>
+                    <div>
+                      <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0 }}>ROCAL ELETRÔNICA</h1>
+                      <p style={{ fontSize: '10px', color: '#71717a', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Sistemas Industriais de Produção</p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <p style={{ fontSize: '12px', fontWeight: 'bold', margin: 0 }}>Data: {activeRecord.formattedDate}</p>
+                      <p style={{ fontSize: '10px', color: '#71717a', margin: 0 }}>Hora: {activeRecord.formattedTime}</p>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '20px', padding: '15px', backgroundColor: activeRecord.status === 'TRANSFERIDO' ? '#ecfdf5' : '#fef2f2', border: '1px solid', borderColor: activeRecord.status === 'TRANSFERIDO' ? '#a7f3d0' : '#fecaca', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '12px', color: activeRecord.status === 'TRANSFERIDO' ? '#065f46' : '#991b1b' }}>
+                      STATUS: {activeRecord.status.replace('_', ' ')}
+                    </span>
+                    <span style={{ fontSize: '11px', fontWeight: '600', color: '#3f3f46' }}>
+                      ALIMENTADOR RESPONSÁVEL: {activeRecord.alimentador}
+                    </span>
+                  </div>
+
+                  <div style={{ marginTop: '30px' }}>
+                    {Object.keys(activeRecord.data).map(line => (
+                      <div key={line} style={{ marginBottom: '20px' }}>
+                        <h3 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#27272a', borderBottom: '1px solid #e4e4e7', paddingBottom: '6px', marginBottom: '8px', fontWeight: '800' }}>{line}</h3>
+                        {activeRecord.data[line].map((item, idx) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', padding: '4px 0', borderBottom: '1px dashed #f4f4f5' }}>
+                            <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{item.codigo}</span>
+                            <span style={{ fontWeight: 'bold' }}>{item.quantidade} UN</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ marginTop: '40px', borderTop: '1px solid #e4e4e7', paddingTop: '20px', textAlign: 'center', fontSize: '9px', color: '#71717a' }}>
+                    Relatório de produção oficial e assinado digitalmente pelo alimentador.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* PDF 2: Consolidado Geral de Descartes de Fio */}
+            <div ref={scrapTotalsReportRef} style={{ padding: '30px', color: '#18181b', fontFamily: 'sans-serif' }}>
+              <div style={{ border: '2px solid #e4e4e7', padding: '30px', borderRadius: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #27272a', paddingBottom: '15px', marginBottom: '25px' }}>
+                  <div>
+                    <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0 }}>ROCAL ELETRÔNICA</h1>
+                    <p style={{ fontSize: '10px', color: '#71717a', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Relatório Consolidado de Descarte de Fios</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '12px', fontWeight: 'bold', margin: 0 }}>Documento Consolidado</p>
+                    <p style={{ fontSize: '10px', color: '#71717a', margin: 0 }}>Gerado em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
+                  </div>
+                </div>
+
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f4f4f5', borderBottom: '2px solid #e4e4e7' }}>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Código do Fio</th>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Bitola</th>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Descrição / Modelo</th>
+                      <th style={{ padding: '10px', fontWeight: 'bold', textAlign: 'right' }}>Soma Acumulada de Descarte</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {WIRE_PRODUCTS.map(wire => {
+                      const totalAccumulated = wireTotals[wire.code]?.total || 0;
+                      return (
+                        <tr style={{ borderBottom: '1px solid #e4e4e7' }} key={wire.code}>
+                          <td style={{ padding: '10px', fontWeight: 'bold', fontFamily: 'monospace' }}>{wire.code}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{getBitola(wire.label)}</td>
+                          <td style={{ padding: '10px' }}>{wire.label}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold', textAlign: 'right', color: totalAccumulated > 0 ? '#10b981' : '#18181b' }}>
+                            {totalAccumulated.toFixed(3)} Kg
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                <div style={{ marginTop: '45px', borderTop: '1px solid #e4e4e7', paddingTop: '20px', textAlign: 'center', fontSize: '9px', color: '#71717a' }}>
+                  Auditoria de perdas e resíduos industriais. ROCAL ELETRÔNICA LTDA.
+                </div>
+              </div>
+            </div>
+
+            {/* PDF 3: Histórico Consolidado de Pedidos Almoxarifado */}
+            <div ref={almoxarifadoReportRef} style={{ padding: '30px', color: '#18181b', fontFamily: 'sans-serif' }}>
+              <div style={{ border: '2px solid #e4e4e7', padding: '30px', borderRadius: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #27272a', paddingBottom: '15px', marginBottom: '25px' }}>
+                  <div>
+                    <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0 }}>ROCAL ELETRÔNICA</h1>
+                    <p style={{ fontSize: '10px', color: '#71717a', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Pedido de Materiais ao Almoxarifado</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '10px', color: '#71717a', margin: 0 }}>Emitido em: {new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR')}</p>
+                  </div>
+                </div>
+
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#f4f4f5', borderBottom: '2px solid #e4e4e7' }}>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Data</th>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Item Solicitado</th>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Código</th>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Qtd</th>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Alimentador</th>
+                      <th style={{ padding: '10px', fontWeight: 'bold' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {almoxarifadoRequests.map((item) => (
+                      <tr style={{ borderBottom: '1px solid #e4e4e7' }} key={item.id}>
+                        <td style={{ padding: '10px' }}>{item.formattedDate}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.itemName}</td>
+                        <td style={{ padding: '10px' }}>{item.itemCode}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.quantidade} UN</td>
+                        <td style={{ padding: '10px' }}>{item.alimentador}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div style={{ marginTop: '50px', borderTop: '1px solid #e4e4e7', paddingTop: '20px', textAlign: 'center', fontSize: '9px', color: '#71717a' }}>
+                  ROCAL ELETRÔNICA LTDA - Documento de Requisição de Estoque e Suprimentos.
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
