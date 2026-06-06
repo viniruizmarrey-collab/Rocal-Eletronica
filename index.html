@@ -222,6 +222,7 @@
 
       const [currentDateTime, setCurrentDateTime] = useState(new Date());
       const [activeSystemTab, setActiveSystemTab] = useState('lancamento');
+      const [activeGestaoSubtab, setActiveGestaoSubtab] = useState('ferias');
 
       const productionLines = {
         TOROIDE: Array.from({ length: 6 }, (_, i) => `TOROIDE ${i + 1}`),
@@ -1074,7 +1075,7 @@
 
       const selectedStats = getRecordStats(activeRecord);
 
-      /* --- EXCLUSIVIDADE ADMINISTRATIVA STRICT: APENAS PEDRO E VILMA (image_36f4ee.png) --- */
+      /* --- EXCLUSIVIDADE ADMINISTRATIVA STRICT: APENAS PEDRO E VILMA --- */
       const isAdminUser = useMemo(() => {
         if (!loggedUser) return false;
         return ["PEDRO", "VILMA"].includes(loggedUser.toUpperCase());
@@ -1282,6 +1283,7 @@
             </div>
           )}
 
+          {}
           <header className="bg-zinc-950 border-b border-zinc-800 sticky top-0 z-40 backdrop-blur-md">
             <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-5">
@@ -1305,7 +1307,6 @@
               </div>
               
               <div className="flex flex-wrap items-center gap-4">
-                {/* EXIBIÇÃO APENAS DO NOME DO USUÁRIO LOGADO EM AMARELO */}
                 <div className="flex flex-col text-right justify-center">
                   <div className="text-sm font-black tracking-wider uppercase">
                     <span className="text-yellow-400 font-black text-lg">{loggedUser ? loggedUser.toUpperCase() : "N/A"}</span>
@@ -1336,7 +1337,7 @@
             </div>
           </header>
 
-          {/* NAVEGAÇÃO PRINCIPAL */}
+          {}
           <nav className="bg-zinc-950/20 border-b border-zinc-800 p-2 sticky top-[72px] z-30 backdrop-blur">
             <div className="max-w-5xl mx-auto flex flex-wrap gap-2">
               <button onClick={() => setActiveSystemTab('lancamento')} className={`flex-1 min-w-[120px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeSystemTab === 'lancamento' ? 'bg-sky-600 text-white border border-sky-500' : 'text-zinc-500 hover:text-zinc-200'}`}>Lançamento</button>
@@ -1345,7 +1346,7 @@
               <button onClick={() => setActiveSystemTab('ordens_servico')} className={`flex-1 min-w-[120px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeSystemTab === 'ordens_servico' ? 'bg-sky-600 text-white border border-sky-500' : 'text-zinc-500 hover:text-zinc-200'}`}>QP's/melhorias</button>
               <button onClick={() => setActiveSystemTab('pedidos')} className={`flex-1 min-w-[120px] py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeSystemTab === 'pedidos' ? 'bg-sky-600 text-white border border-sky-500' : 'text-zinc-500 hover:text-zinc-200'}`}>Pedidos</button>
               
-              {/* ABA EXCLUSIVA GESTÃO INTERNA (Apenas PEDRO e VILMA têm visibilidade -- image_36f4ee.png) */}
+              {/* ABA EXCLUSIVA GESTÃO INTERNA (Apenas PEDRO e VILMA) */}
               {isAdminUser && (
                 <button 
                   onClick={() => setActiveSystemTab('gestao')} 
@@ -1363,7 +1364,7 @@
 
           <main className="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col justify-start">
             
-            {/* --- ABA: LANÇAMENTO --- */}
+            {/* ================= ABA: LANÇAMENTO ================= */}
             {activeSystemTab === 'lancamento' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-start">
                 <div className="lg:col-span-8 bg-zinc-950/40 rounded-3xl border border-zinc-800 shadow-2xl overflow-hidden flex flex-col backdrop-blur-md">
@@ -1409,7 +1410,7 @@
               </div>
             )}
 
-            {/* --- ABA: HISTÓRICO --- */}
+            {/* ================= ABA: HISTÓRICO ================= */}
             {activeSystemTab === 'historico' && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 <div className="lg:col-span-4 space-y-2 overflow-y-auto max-h-[65vh] pr-1 scrollbar-hide">
@@ -1444,14 +1445,29 @@
                     <>
                       <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950/40">
                         <h2 className="text-[10px] font-black uppercase text-zinc-400 tracking-widest">Relatório Técnico</h2>
-                        {/* EXCLUSIVIDADE DO PDF DA HISTÓRIA DE PRODUÇÃO APENAS PARA PEDRO E VILMA */}
                         {isAdminUser && (
                           <button onClick={exportToPdf} className="flex items-center gap-1.5 px-4 py-1.5 bg-sky-500 text-zinc-950 rounded-lg text-[9px] font-black uppercase shadow-lg shadow-sky-500/10 transition-all"><Icon name="filedown" className="w-3.5 h-3.5" /> PDF</button>
                         )}
                       </div>
                       <div className="p-5 flex-1 space-y-4">
                         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-zinc-900/60 p-4 rounded-xl border border-zinc-800">
-                          <div onClick={() => toggleStatus(activeRecord.id)} className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest border cursor-pointer select-none transition-all ${activeRecord.status === 'TRANSFERIDO' ? 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30 hover:bg-emerald-950/50' : 'bg-red-950/30 text-red-500 border-red-500/30 hover:bg-red-950/50'}`} title="Clique para alterar">
+                          <div 
+                            onClick={() => {
+                              if (isAdminUser) {
+                                toggleStatus(activeRecord.id);
+                              } else {
+                                showToast("Apenas PEDRO e VILMA possuem autorização para alterar o status!", "error");
+                              }
+                            }} 
+                            className={`px-4 py-2 rounded-xl text-[9px] font-black tracking-widest border select-none transition-all ${
+                              isAdminUser ? 'cursor-pointer hover:bg-zinc-800' : 'cursor-not-allowed opacity-80'
+                            } ${
+                              activeRecord.status === 'TRANSFERIDO' 
+                                ? 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30' 
+                                : 'bg-red-950/30 text-red-500 border-red-500/30'
+                            }`} 
+                            title={isAdminUser ? "Clique para alterar o status" : "Apenas PEDRO e VILMA podem alterar"}
+                          >
                             {activeRecord.status === 'TRANSFERIDO' ? '✓ TRANSFERIDO' : '✗ NÃO TRANSFERIDO'}
                           </div>
 
@@ -1500,10 +1516,10 @@
               </div>
             )}
 
-            {/* --- ABA: RELATÓRIO DE DESCARTE DE FIOS --- */}
+            {/* ================= ABA: RELATÓRIO DE DESCARTE DE FIOS ================= */}
             {activeSystemTab === 'fios' && (
               <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-5 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800 backdrop-blur-md">
+                <div className="lg:col-span-4 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800 backdrop-blur-md">
                   <div className="flex items-center gap-2 mb-4">
                     <Icon name="activity" className="w-4 h-4 text-sky-400" />
                     <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Lançar Descarte de Fio</h3>
@@ -1553,7 +1569,7 @@
                     </div>
 
                     <div>
-                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Destino / Linha</label>
+                      <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">LOCAL (Destino)</label>
                       <select value={newWireInput.destino} onChange={e => setNewWireInput(prev => ({ ...prev, destino: e.target.value }))} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none">
                         {Object.keys(productionLines).flatMap(cat => 
                           productionLines[cat].map(line => (
@@ -1572,29 +1588,25 @@
                   </form>
                 </div>
 
-                <div className="lg:col-span-7 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800 flex flex-col h-full min-h-[350px] backdrop-blur-md">
-                  <div className="flex justify-between items-center mb-3">
+                {/* HISTÓRICO DE DESCARTE DE FIOS INDIVIDUAL - VISÍVEL A TODOS */}
+                <div className="lg:col-span-8 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 backdrop-blur-md flex flex-col h-full min-h-[400px]">
+                  <div className="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
                     <div>
                       <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Histórico de Descarte de Fios</h3>
                       <span className="text-[9px] text-zinc-500 font-bold">{wireHistory.length} registros</span>
                     </div>
                     
-                    {/* EXCLUSIVIDADE DE EXPORTAÇÃO DOS DOIS PDFS APENAS PARA PEDRO E VILMA (image_36edeb.png & image_36ed14.png) */}
+                    {}
                     {isAdminUser && (
-                      <div className="flex gap-1.5 flex-wrap">
-                        <button onClick={exportScrapHistoryToPdf} className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-sky-400 border border-zinc-700 rounded-xl text-[9px] font-black uppercase transition-all" title="Exportar histórico detalhado">
-                          <Icon name="filedown" className="w-3.5 h-3.5" /> Histórico (PDF)
-                        </button>
-                        <button onClick={exportScrapTotalsToPdf} className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-yellow-400 border border-zinc-700 rounded-xl text-[9px] font-black uppercase transition-all" title="Exportar totais de cada fio para PDF">
-                          <Icon name="filedown" className="w-3.5 h-3.5" /> Totais (PDF)
-                        </button>
-                      </div>
+                      <button onClick={exportScrapHistoryToPdf} className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-sky-400 border border-zinc-700 rounded-xl text-[9px] font-black uppercase transition-all" title="Exportar histórico detalhado">
+                        <Icon name="filedown" className="w-3.5 h-3.5" /> Histórico (PDF)
+                      </button>
                     )}
                   </div>
 
-                  <div className="flex-1 overflow-y-auto max-h-[40vh] space-y-2 pr-1 scrollbar-hide">
+                  <div className="flex-1 overflow-y-auto max-h-[50vh] space-y-2 pr-1 scrollbar-hide">
                     {wireHistory.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center py-10 text-zinc-600">
+                      <div className="h-full flex flex-col items-center justify-center py-20 text-zinc-600">
                         <Icon name="layers" className="w-8 h-8 mb-2 opacity-10" />
                         <p className="text-[8px] font-black uppercase tracking-widest">Nenhum descarte de fio registrado.</p>
                       </div>
@@ -1607,7 +1619,7 @@
                               <span className="text-[8px] bg-zinc-900 px-1 py-0.5 rounded text-zinc-500 font-bold">{wire.formattedDate}</span>
                             </div>
                             <div className="text-[10px] text-zinc-300 font-mono">
-                              Descartado: <span className="font-bold text-zinc-100">{wire.quantidade} {wire.unidade}</span> | Linha: {wire.destino} | Alimentador: <span className="font-semibold text-sky-400">{wire.alimentador}</span>
+                              Descartado: <span className="font-bold text-zinc-100">{wire.quantidade} {wire.unidade}</span> | Local: {wire.destino} | Alimentador: <span className="font-semibold text-sky-400">{wire.alimentador}</span>
                             </div>
                           </div>
                           <button onClick={() => removeWireRecord(wire.id)} className="text-zinc-600 hover:text-red-500 p-1.5 transition-colors" title="Excluir"><Icon name="trash" className="w-4 h-4" /></button>
@@ -1616,47 +1628,10 @@
                     )}
                   </div>
                 </div>
-
-                {/* PAINEL TOTAL DE DESCARTE REGISTRADO - COM DESTAQUE EM AMARELO NOS NATURAIS (image_36ea08.png) */}
-                <div className="lg:col-span-12">
-                  <h3 className="text-xs font-black uppercase text-zinc-400 tracking-wider mb-2">PAINEL TOTAL DE DESCARTE REGISTRADO</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-                    {WIRE_PRODUCTS.map(wire => {
-                      const accum = wireTotals[wire.code]?.total || 0;
-                      const isVerde = wire.label.includes("VERDE");
-                      const isVermelho = wire.label.includes("VERMELHO");
-                      
-                      const badgeColor = isVerde 
-                        ? 'border-emerald-800 text-emerald-400 bg-emerald-950/20' 
-                        : isVermelho 
-                        ? 'border-red-900 text-red-400 bg-red-950/20' 
-                        : 'border-yellow-600/60 text-yellow-400 bg-yellow-950/20';
-
-                      const cardBorder = isVerde
-                        ? 'border-zinc-800 hover:border-emerald-700/40'
-                        : isVermelho
-                        ? 'border-zinc-800 hover:border-red-900/40'
-                        : 'border-zinc-800 hover:border-yellow-600/40';
-
-                      return (
-                        <div key={wire.code} className={`bg-zinc-950/40 border rounded-xl p-2.5 text-center flex flex-col justify-between items-center shadow-inner transition-colors backdrop-blur-md ${cardBorder}`}>
-                          <span className="text-xs font-black tracking-tight text-zinc-100">{wire.code}</span>
-                          <span className="text-[9px] font-bold text-zinc-400 font-mono mt-0.5">{getBitola(wire.label)}</span>
-                          <span className={`text-[8px] px-1.5 py-0.5 rounded-md border font-black uppercase my-1 truncate max-w-full ${badgeColor}`}>
-                            {isVerde ? 'Verde' : isVermelho ? 'Vermelho' : 'Natural'}
-                          </span>
-                          <span className="text-xs font-mono font-black text-sky-400">
-                            {accum.toFixed(3)} <span className="text-[9px] text-zinc-500 font-bold">Kg</span>
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
             )}
 
-            {/* --- ABA: QP's/melhorias --- */}
+            {/* ================= ABA: QP's / MELHORIAS ================= */}
             {activeSystemTab === 'ordens_servico' && (
               <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
@@ -1739,9 +1714,9 @@
                   </div>
                 </div>
 
-                {/* BLOCO EXCLUSIVO: SUGESTÕES OU MELHORIAS (ANÔNIMAS E SEPARADAS) */}
-                <div className="lg:col-span-12 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 backdrop-blur-md mt-6 grid grid-cols-1 md:grid-cols-12 gap-6">
-                  <div className="md:col-span-5 border-r border-zinc-800/60 pr-0 md:pr-6">
+                {/* BLOCO EXCLUSIVO: SUGESTÕES OU MELHORIAS (Apenas Formulário Público) */}
+                <div className="lg:col-span-12 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 backdrop-blur-md mt-6">
+                  <div className="max-w-2xl mx-auto">
                     <div className="flex items-center gap-2 mb-3">
                       <Icon name="clipboardlist" className="w-4 h-4 text-yellow-400" />
                       <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Sugestões ou melhorias</h3>
@@ -1750,102 +1725,67 @@
                     <textarea rows="4" placeholder="Digite aqui sua sugestão de melhoria para o chão de fábrica..." value={newSuggestionText} onChange={e => setNewSuggestionText(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs font-medium text-zinc-200 focus:ring-1 focus:ring-sky-500/40 outline-none resize-none"></textarea>
                     <button onClick={addSuggestion} className="w-full mt-2 py-2 bg-yellow-500 hover:bg-yellow-400 text-zinc-950 font-black text-[9px] uppercase tracking-wider rounded-xl transition-all shadow-lg">Registrar Sugestão</button>
                   </div>
-                  
-                  <div className="md:col-span-7 flex flex-col h-full min-h-[220px]">
-                    <h4 className="text-xs font-black uppercase text-zinc-400 tracking-wider mb-3">Histórico de Sugestões / Melhorias Registradas</h4>
-                    <div className="flex-1 overflow-y-auto max-h-[220px] space-y-2 pr-1 scrollbar-hide">
-                      {suggestions.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center py-10 text-zinc-700 text-center">
-                          <Icon name="packageopen" className="w-8 h-8 mb-2 opacity-10" />
-                          <p className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Nenhuma sugestão registrada até o momento.</p>
-                        </div>
-                      ) : (
-                        suggestions.map(sug => (
-                          <div key={sug.id} className="p-3 bg-zinc-900/30 rounded-xl border border-zinc-800/60 flex justify-between items-start gap-3">
-                            <div className="flex-1">
-                              <span className="text-[8px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">Registro: {sug.formattedDate} às {sug.formattedTime}</span>
-                              <p className="text-xs text-zinc-200 mt-1.5 whitespace-pre-wrap leading-relaxed">{sug.text}</p>
-                            </div>
-                            <button onClick={() => removeSuggestion(sug.id)} className="text-zinc-600 hover:text-red-500 p-1.5 transition-colors" title="Excluir"><Icon name="trash" className="w-3.5 h-3.5" /></button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
                 </div>
-
               </div>
             )}
 
-            {/* --- ABA: PEDIDOS --- */}
+            {/* ================= ABA: PEDIDOS AO ALMOXARIFADO ================= */}
             {activeSystemTab === 'pedidos' && (
               <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-5 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 flex flex-col gap-6 backdrop-blur-md">
-                  <div className="border border-zinc-800 bg-zinc-900/10 p-4 rounded-2xl">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Icon name="shoppingbag" className="w-4 h-4 text-sky-400" />
-                      <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Novo Pedido Almoxarifado</h3>
+                
+                {/* MATERIAIS SALVOS (SHORTCUTS) */}
+                <div className="lg:col-span-4 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800 backdrop-blur-md">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Icon name="star" className="w-4 h-4 text-sky-400" />
+                    <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Atalhos de Materiais</h3>
+                  </div>
+                  <p className="text-[9px] text-zinc-500 mb-4 font-semibold uppercase leading-tight">Adicione itens comuns da ROCAL para fazer solicitações rápidas.</p>
+
+                  <div className="space-y-3 pb-3 border-b border-zinc-800/80">
+                    <input type="text" placeholder="Nome do Item (EX: PARAFUSO)" value={newAlmoxarifado.itemName} onChange={e => setNewAlmoxarifado(prev => ({ ...prev, itemName: e.target.value.toUpperCase() }))} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none" />
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Cód: 4244" value={newAlmoxarifado.itemCode} onChange={e => setNewAlmoxarifado(prev => ({ ...prev, itemCode: e.target.value.toUpperCase() }))} className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none font-mono" />
+                      <button onClick={handleSaveMaterialShortcut} className="px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg text-xs font-black uppercase tracking-wider transition-all">+</button>
                     </div>
-                    <form onSubmit={handleAddManualRequest} className="space-y-3">
-                      <div>
-                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Nome do Item</label>
-                        <input type="text" placeholder="NOME DO MATERIAL" value={newAlmoxarifado.itemName} onChange={e => setNewAlmoxarifado(prev => ({ ...prev, itemName: e.target.value }))} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none uppercase" />
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-3">
-                        <div>
-                          <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Código do Item</label>
-                          <input type="text" placeholder="EX: 4244" value={newAlmoxarifado.itemCode} onChange={e => setNewAlmoxarifado(prev => ({ ...prev, itemCode: e.target.value }))} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-200 focus:outline-none uppercase" />
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button type="submit" className="flex-1 py-2 bg-sky-500 hover:bg-sky-400 text-zinc-950 font-black text-[9px] uppercase tracking-wider rounded-xl transition-all shadow-lg">Enviar para Almoxarifado</button>
-                        <button type="button" onClick={handleSaveMaterialShortcut} className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-770 text-zinc-300 rounded-xl text-[9px] font-black uppercase transition-all flex items-center justify-center gap-1 border border-zinc-700/50" title="Salvar este item como atalho rápido">
-                          <Icon name="star" className="w-3.5 h-3.5 text-yellow-400" />
-                          <span>Salvar</span>
-                        </button>
-                      </div>
-                    </form>
                   </div>
 
-                  <div className="border border-zinc-800 bg-zinc-900/10 p-4 rounded-2xl flex-1 flex flex-col">
-                    <span className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-3">Materiais Salvos (Atalhos de Envio Rápido)</span>
-                    <div className="flex-1 overflow-y-auto max-h-[160px] space-y-1.5 scrollbar-hide pr-1">
-                      {savedMaterials.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center py-6 text-center text-zinc-600 border border-dashed border-zinc-800/80 rounded-xl">
-                          <p className="text-[9px] font-black uppercase">Nenhum atalho salvo.</p>
-                          <p className="text-[8px] text-zinc-500 mt-0.5">Preencha o item acima e clique em "Salvar".</p>
-                        </div>
-                      ) : (
-                        savedMaterials.map(mat => (
-                          <div key={mat.id} onClick={() => handleOpenQuickRequest(mat)} className="p-2 bg-zinc-900/60 hover:bg-zinc-800 border border-zinc-800/60 hover:border-sky-500/30 rounded-xl flex items-center justify-between gap-3 cursor-pointer group transition-all" title="Clique para realizar pedido rápido">
-                            <div className="flex items-center gap-2">
-                              <Icon name="star" className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400/20" />
-                              <div className="text-[10px] font-black text-zinc-200 uppercase truncate max-w-[150px]">{mat.name}</div>
-                              <span className="text-[9px] font-mono text-zinc-500">({mat.code})</span>
-                            </div>
-                            <button onClick={(e) => handleRemoveSavedMaterial(mat.id, e)} className="text-zinc-600 hover:text-red-500 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity" title="Remover atalho"><Icon name="x" className="w-3.5 h-3.5" /></button>
+                  <div className="mt-4 space-y-1.5 max-h-[220px] overflow-y-auto scrollbar-hide">
+                    {savedMaterials.length === 0 ? (
+                      <div className="text-center py-6 text-zinc-700">
+                        <Icon name="packageopen" className="w-7 h-7 mx-auto opacity-10 mb-1" />
+                        <span className="text-[8px] font-black uppercase tracking-widest">Nenhum atalho salvo</span>
+                      </div>
+                    ) : (
+                      savedMaterials.map(mat => (
+                        <div key={mat.id} onClick={() => handleOpenQuickRequest(mat)} className="p-2 bg-zinc-900/40 hover:bg-sky-950/10 border border-zinc-800/50 hover:border-sky-500/30 rounded-xl flex justify-between items-center cursor-pointer transition-all">
+                          <div>
+                            <span className="text-xs font-black text-zinc-300 uppercase">{mat.name}</span>
+                            <span className="block text-[8px] text-sky-400 font-mono mt-0.5">Cod: {mat.code}</span>
                           </div>
-                        ))
-                      )}
-                    </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[8px] bg-sky-950/40 text-sky-400 px-2 py-0.5 rounded font-black uppercase">Pedir</span>
+                            <button onClick={(e) => handleRemoveSavedMaterial(mat.id, e)} className="text-zinc-600 hover:text-red-500 p-1 transition-colors"><Icon name="trash" className="w-3.5 h-3.5" /></button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 
-                <div className="lg:col-span-7 bg-zinc-950/40 p-4 rounded-3xl border border-zinc-800 flex flex-col h-full min-h-[350px] backdrop-blur-md">
+                {/* HISTÓRICO DE REQUISIÇÕES AO ALMOXARIFADO */}
+                <div className="lg:col-span-8 bg-zinc-950/40 p-4 rounded-2xl border border-zinc-800 flex flex-col h-full min-h-[350px] backdrop-blur-md">
                   <div className="flex justify-between items-center mb-4">
                     <div>
-                      <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Lista de Requisições Enviadas</h3>
+                      <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Histórico de Pedidos de Suprimentos</h3>
                       <span className="text-[9px] text-zinc-500 font-bold">{almoxarifadoRequests.length} solicitações</span>
                     </div>
-                    {/* EXCLUSIVIDADE DO PDF DE ALMOXARIFADO APENAS PARA PEDRO E VILMA */}
+                    {}
                     {isAdminUser && (
                       <button onClick={exportAlmoxarifadoToPdf} className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-sky-400 border border-zinc-700 rounded-xl text-[9px] font-black uppercase transition-all"><Icon name="filedown" className="w-3.5 h-3.5" /> PDF</button>
                     )}
                   </div>
 
-                  <div className="flex-1 overflow-y-auto max-h-[50vh] space-y-2 pr-1 scrollbar-hide">
+                  <div className="flex-1 overflow-y-auto max-h-[45vh] space-y-2 pr-1 scrollbar-hide">
                     {almoxarifadoRequests.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center py-10 text-zinc-600">
                         <Icon name="packageopen" className="w-8 h-8 mb-2 opacity-10" />
@@ -1859,18 +1799,22 @@
                           'ENTREGUE': 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30'
                         }[req.status] || 'bg-zinc-850 text-zinc-300';
 
-                        const isUrgente = req.urgencia === 'URGENTE';
+                        const urgencyBadge = req.urgencia === 'URGENTE' 
+                          ? 'bg-red-950/40 text-red-500 border-red-500/30' 
+                          : 'bg-emerald-950/20 text-emerald-400 border-emerald-500/20';
 
                         return (
-                          <div key={req.id} className="p-3 bg-zinc-900/30 rounded-xl border border-zinc-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="space-y-1">
+                          <div key={req.id} className="p-3 bg-zinc-900/30 rounded-xl border border-zinc-800/60 flex items-center justify-between gap-3">
+                            <div className="space-y-0.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className={`text-[8px] px-1.5 py-0.5 rounded-md border font-black uppercase tracking-wide ${isUrgente ? 'bg-red-950/40 text-red-400 border-red-500/20' : 'bg-emerald-950/20 text-emerald-400 border-emerald-500/10'}`}>{isUrgente ? '🚨 URGENTE' : '⏳ NORMAL'}</span>
                                 <span className="text-xs font-black text-sky-400">{req.itemName}</span>
-                                <span className="text-[9px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">Cód: {req.itemCode}</span>
+                                <span className="text-[9px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold font-mono">Cód: {req.itemCode}</span>
+                                <span className={`text-[8px] border px-1.5 py-0.5 rounded font-black uppercase ${urgencyBadge}`}>{req.urgencia}</span>
                                 <span className="text-[9px] text-zinc-400 font-bold">{req.formattedDate}</span>
                               </div>
-                              <div className="text-[10px] text-zinc-300 font-mono">Quantidade: <span className="font-bold text-zinc-100">{req.quantidade} UN</span> | Solicitante: <span className="text-sky-400 font-semibold">{req.alimentador}</span></div>
+                              <div className="text-[10px] text-zinc-300 font-mono">
+                                Quantidade: <span className="font-bold text-zinc-100">{req.quantidade} UN</span> | Alimentador: {req.alimentador}
+                              </div>
                             </div>
 
                             <div className="flex items-center gap-2">
@@ -1883,233 +1827,385 @@
                     )}
                   </div>
                 </div>
+
+                {/* LANÇAMENTO MANUAL EXPLICATIVO */}
+                <div className="lg:col-span-12 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 backdrop-blur-md mt-6">
+                  <div className="max-w-2xl mx-auto">
+                    <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider mb-2">Requisição Operacional Manual</h3>
+                    <p className="text-[10px] text-zinc-500 font-medium mb-3">Se o item desejado não possuir atalho registrado acima, utilize o formulário abaixo para enviar o pedido direto.</p>
+                    <form onSubmit={handleAddManualRequest} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <input type="text" placeholder="Nome Completo do Material" required value={newAlmoxarifado.itemName} onChange={e => setNewAlmoxarifado(prev => ({ ...prev, itemName: e.target.value.toUpperCase() }))} className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-zinc-200 outline-none" />
+                      <input type="text" placeholder="Código de Fábrica" required value={newAlmoxarifado.itemCode} onChange={e => setNewAlmoxarifado(prev => ({ ...prev, itemCode: e.target.value.toUpperCase() }))} className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-zinc-200 outline-none font-mono" />
+                      <button type="submit" className="py-2 bg-sky-500 hover:bg-sky-400 text-zinc-950 font-black text-[9px] uppercase tracking-wider rounded-xl transition-all shadow-lg font-black">Lançar Requisição</button>
+                    </form>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* --- ABA: GESTÃO INTERNA (Apenas PEDRO e VILMA) --- */}
+            {/* ================= ABA: GESTÃO INTERNA (PEDRO / VILMA) ================= */}
             {activeSystemTab === 'gestao' && isAdminUser && (
-              <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                <div className="lg:col-span-5 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 flex flex-col backdrop-blur-md">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Icon name="edit" className="w-4 h-4 text-amber-400" />
-                    <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Notas de Gestão e Planejamento</h3>
-                  </div>
-                  <p className="text-[10px] text-zinc-500 font-medium mb-3">Espaço corporativo seguro e restrito para rascunhos, cronogramas de suprimentos e observações internas de turnos.</p>
+                {/* BARRA LATERAL ESQUERDA PARA SUBTÓPICOS */}
+                <div className="lg:col-span-3 flex flex-col gap-2 bg-zinc-950/40 p-4 rounded-3xl border border-zinc-800 backdrop-blur-md">
+                  <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest px-3 mb-2">Painel de Gestão</div>
                   
-                  <div className="mb-3">
-                    <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Título da Nota</label>
-                    <input 
-                      type="text" 
-                      placeholder="Ex: Ajustar Turno B / Cronograma de fios" 
-                      value={noteTitle} 
-                      onChange={e => setNoteTitle(e.target.value)} 
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500 placeholder-zinc-700 uppercase"
-                    />
-                  </div>
+                  <button 
+                    onClick={() => setActiveGestaoSubtab('ferias')} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left border ${
+                      activeGestaoSubtab === 'ferias' 
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                        : 'bg-zinc-900/10 text-zinc-400 border-transparent hover:bg-zinc-900/40 hover:text-zinc-250'
+                    }`}
+                  >
+                    <Icon name="calendar" className="w-4 h-4" />
+                    <span>Férias</span>
+                  </button>
 
-                  <div className="mb-3 flex-1 flex flex-col">
-                    <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Conteúdo das Notas</label>
-                    <textarea 
-                      rows="8" 
-                      placeholder="Escreva aqui planos de produção, recados para os outros líderes ou notas administrativas..." 
-                      value={noteContent} 
-                      onChange={e => setNoteContent(e.target.value)} 
-                      className="w-full flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs font-medium text-zinc-200 focus:ring-1 focus:ring-amber-500 outline-none resize-none scrollbar-hide"
-                    ></textarea>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={handleSaveAdminNote} 
-                      className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-amber-500/10"
-                    >
-                      Salvar Notas de Gestão
-                    </button>
-                    {currentNoteId && (
-                      <button 
-                        onClick={startNewNote}
-                        className="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all border border-zinc-700/50"
-                      >
-                        Nova Nota
-                      </button>
-                    )}
-                  </div>
+                  <button 
+                    onClick={() => setActiveGestaoSubtab('descartes')} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left border ${
+                      activeGestaoSubtab === 'descartes' 
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                        : 'bg-zinc-900/10 text-zinc-400 border-transparent hover:bg-zinc-900/40 hover:text-zinc-250'
+                    }`}
+                  >
+                    <Icon name="layers" className="w-4 h-4" />
+                    <span>Registro de Descarte</span>
+                  </button>
 
-                  <div className="mt-5 border-t border-zinc-800/60 pt-4">
-                    <span className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-2">Notas Salvas (Clique no Título para Abrir)</span>
-                    <div className="space-y-1 max-h-[140px] overflow-y-auto scrollbar-hide">
-                      {adminNotesList.length === 0 ? (
-                        <div className="text-center py-4 text-zinc-700">
-                          <p className="text-[8px] uppercase font-bold">Nenhuma nota cadastrada até o momento.</p>
-                        </div>
-                      ) : (
-                        adminNotesList.map(note => (
-                          <div 
-                            key={note.id}
-                            onClick={() => loadNote(note)}
-                            className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${
-                              currentNoteId === note.id 
-                                ? 'bg-amber-950/20 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.1)]' 
-                                : 'bg-zinc-900/40 border-zinc-800/60 text-zinc-300 hover:bg-zinc-900/80 hover:border-zinc-700'
-                            }`}
-                          >
-                            <span className="text-[10px] font-black uppercase truncate pr-2 flex-1">{note.title}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[8px] text-zinc-600 font-bold font-mono">
-                                {new Date(note.timestamp).toLocaleDateString('pt-BR')}
-                              </span>
-                              <button 
-                                onClick={(e) => handleDeleteAdminNote(note.id, e)}
-                                className="text-zinc-600 hover:text-red-500 p-1 rounded-lg transition-colors"
-                                title="Excluir nota"
-                              >
-                                <Icon name="trash" className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                  <button 
+                    onClick={() => setActiveGestaoSubtab('sugestoes')} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left border ${
+                      activeGestaoSubtab === 'sugestoes' 
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                        : 'bg-zinc-900/10 text-zinc-400 border-transparent hover:bg-zinc-900/40 hover:text-zinc-250'
+                    }`}
+                  >
+                    <Icon name="clipboardlist" className="w-4 h-4" />
+                    <span>Sugestões Recebidas</span>
+                  </button>
+
+                  <button 
+                    onClick={() => setActiveGestaoSubtab('anotacoes')} 
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all text-left border ${
+                      activeGestaoSubtab === 'anotacoes' 
+                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                        : 'bg-zinc-900/10 text-zinc-400 border-transparent hover:bg-zinc-900/40 hover:text-zinc-250'
+                    }`}
+                  >
+                    <Icon name="edit" className="w-4 h-4" />
+                    <span>Anotações Gerais</span>
+                  </button>
                 </div>
 
-                <div className="lg:col-span-7 space-y-6">
+                {/* ÁREA DE CONTEÚDO DINÂMICA (SUBTÓPICOS) */}
+                <div className="lg:col-span-9 flex flex-col gap-6 w-full">
                   
-                  <div className="bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 backdrop-blur-md">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Icon name="calendar" className="w-4 h-4 text-amber-400" />
-                      <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Cadastrar Férias de Colaborador</h3>
+                  {/* SUBTÓPICO: FÉRIAS */}
+                  {activeGestaoSubtab === 'ferias' && (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                      <div className="md:col-span-5 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 backdrop-blur-md">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Icon name="calendar" className="w-4 h-4 text-amber-400" />
+                          <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Cadastrar Férias de Colaborador</h3>
+                        </div>
+                        
+                        <form onSubmit={addVacationRecord} className="space-y-4">
+                          <div>
+                            <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Nome do Funcionário</label>
+                            <input 
+                              type="text" 
+                              required 
+                              placeholder="NOME COMPLETO" 
+                              value={newVacation.nome} 
+                              onChange={e => setNewVacation(prev => ({ ...prev, nome: e.target.value }))} 
+                              className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500 uppercase" 
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Cargo / Função</label>
+                              <input 
+                                type="text" 
+                                required 
+                                placeholder="EX: ALIMENTADOR" 
+                                value={newVacation.cargo} 
+                                onChange={e => setNewVacation(prev => ({ ...prev, cargo: e.target.value }))} 
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500 uppercase" 
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Empresa Vinculada</label>
+                              <select 
+                                value={newVacation.empresa} 
+                                onChange={e => setNewVacation(prev => ({ ...prev, empresa: e.target.value }))} 
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none"
+                              >
+                                <option value="ROCAL">ROCAL</option>
+                                <option value="RVD">RVD</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Data Completa de Início</label>
+                              <input 
+                                type="date" 
+                                required 
+                                value={newVacation.dataInicio} 
+                                onChange={e => setNewVacation(prev => ({ ...prev, dataInicio: e.target.value }))} 
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500" 
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Data Completa de Término</label>
+                              <input 
+                                type="date" 
+                                required 
+                                value={newVacation.dataFim} 
+                                onChange={e => setNewVacation(prev => ({ ...prev, dataFim: e.target.value }))} 
+                                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500" 
+                              />
+                            </div>
+                          </div>
+
+                          <button type="submit" className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-[9px] uppercase tracking-wider rounded-xl transition-all shadow-lg">Confirmar e Cadastrar Férias</button>
+                        </form>
+                      </div>
+
+                      <div className="md:col-span-7 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 backdrop-blur-md grid grid-cols-1 md:grid-cols-2 gap-4">
+                        
+                        <div className="border-r border-zinc-800/80 pr-0 md:pr-4 flex flex-col">
+                          <div className="flex items-center justify-between border-b border-zinc-800/60 pb-2 mb-3">
+                            <span className="text-[11px] font-black text-yellow-500 uppercase tracking-wider">Férias ROCAL</span>
+                            <span className="text-[8px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">{rocalVacations.length} Ativos</span>
+                          </div>
+                          
+                          <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar-hide flex-1">
+                            {rocalVacations.length === 0 ? (
+                              <div className="text-center py-6 text-zinc-600">
+                                <p className="text-[9px] uppercase font-bold">Nenhum registro para ROCAL.</p>
+                              </div>
+                            ) : (
+                              rocalVacations.map(v => (
+                                <div key={v.id} className="p-2.5 bg-zinc-900/40 rounded-xl border border-zinc-800/50 flex justify-between items-start">
+                                  <div>
+                                    <h4 className="text-[10px] font-black text-zinc-200">{v.nome}</h4>
+                                    <span className="block text-[8px] text-zinc-500 font-bold uppercase">{v.cargo}</span>
+                                    <div className="text-[9px] font-mono text-zinc-400 mt-1">
+                                      📅 {v.dataInicio.split('-').reverse().join('/')} até {v.dataFim.split('-').reverse().join('/')}
+                                    </div>
+                                  </div>
+                                  <button onClick={() => removeVacationRecord(v.id)} className="text-zinc-600 hover:text-red-500 p-1 transition-colors">
+                                    <Icon name="trash" className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <div className="flex items-center justify-between border-b border-zinc-800/60 pb-2 mb-3">
+                            <span className="text-[11px] font-black text-amber-500 uppercase tracking-wider">Férias RVD</span>
+                            <span className="text-[8px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">{rvdVacations.length} Ativos</span>
+                          </div>
+
+                          <div className="space-y-2 max-h-[220px] overflow-y-auto scrollbar-hide flex-1">
+                            {rvdVacations.length === 0 ? (
+                              <div className="text-center py-6 text-zinc-600">
+                                <p className="text-[9px] uppercase font-bold">Nenhum registro para RVD.</p>
+                              </div>
+                            ) : (
+                              rvdVacations.map(v => (
+                                <div key={v.id} className="p-2.5 bg-zinc-900/40 rounded-xl border border-zinc-800/50 flex justify-between items-start">
+                                  <div>
+                                    <h4 className="text-[10px] font-black text-zinc-200">{v.nome}</h4>
+                                    <span className="block text-[8px] text-zinc-500 font-bold uppercase">{v.cargo}</span>
+                                    <div className="text-[9px] font-mono text-zinc-400 mt-1">
+                                      📅 {v.dataInicio.split('-').reverse().join('/')} até {v.dataFim.split('-').reverse().join('/')}
+                                    </div>
+                                  </div>
+                                  <button onClick={() => removeVacationRecord(v.id)} className="text-zinc-600 hover:text-red-500 p-1 transition-colors">
+                                    <Icon name="trash" className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
                     </div>
-                    
-                    <form onSubmit={addVacationRecord} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Nome do Funcionário</label>
-                        <input 
-                          type="text" 
-                          required 
-                          placeholder="NOME COMPLETO" 
-                          value={newVacation.nome} 
-                          onChange={e => setNewVacation(prev => ({ ...prev, nome: e.target.value }))} 
-                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500 uppercase" 
-                        />
+                  )}
+
+                  {/* SUBTÓPICO: REGISTRO DE DESCARTE (RESTRITO COM TOTAIS CONSOLIDADOS) */}
+                  {activeGestaoSubtab === 'descartes' && (
+                    <div className="bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 flex flex-col h-full min-h-[400px]">
+                      <div className="flex justify-between items-center mb-4 pb-2 border-b border-zinc-800">
+                        <div>
+                          <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Painel de Estoque e Descarte Consolidado</h3>
+                        </div>
+                        <button onClick={exportScrapTotalsToPdf} className="flex items-center gap-1 px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-750 text-yellow-400 border border-zinc-700 rounded-xl text-[9px] font-black uppercase transition-all" title="Exportar totais de cada fio para PDF">
+                          <Icon name="filedown" className="w-3.5 h-3.5" /> Totais (PDF)
+                        </button>
                       </div>
 
-                      <div>
-                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Cargo / Função</label>
-                        <input 
-                          type="text" 
-                          required 
-                          placeholder="EX: ALIMENTADOR" 
-                          value={newVacation.cargo} 
-                          onChange={e => setNewVacation(prev => ({ ...prev, cargo: e.target.value }))} 
-                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500 uppercase" 
-                        />
-                      </div>
+                      {/* PAINEL TOTAL DE DESCARTE REGISTRADO - AGORA PROTEGIDO NA GESTÃO INTERNA */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                        {WIRE_PRODUCTS.map(wire => {
+                          const accum = wireTotals[wire.code]?.total || 0;
+                          const isVerde = wire.label.includes("VERDE");
+                          const isVermelho = wire.label.includes("VERMELHO");
+                          
+                          const badgeColor = isVerde 
+                            ? 'border-emerald-800 text-emerald-400 bg-emerald-950/20' 
+                            : isVermelho 
+                            ? 'border-red-900 text-red-400 bg-red-950/20' 
+                            : 'border-yellow-600/60 text-yellow-400 bg-yellow-950/20';
 
-                      <div>
-                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Empresa Vinculada</label>
-                        <select 
-                          value={newVacation.empresa} 
-                          onChange={e => setNewVacation(prev => ({ ...prev, empresa: e.target.value }))} 
-                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-300 focus:outline-none"
-                        >
-                          <option value="ROCAL">ROCAL</option>
-                          <option value="RVD">RVD</option>
-                        </select>
-                      </div>
+                          const cardBorder = isVerde
+                            ? 'border-zinc-800 hover:border-emerald-700/40'
+                            : isVermelho
+                            ? 'border-zinc-800 hover:border-red-900/40'
+                            : 'border-zinc-800 hover:border-yellow-600/40';
 
-                      <div>
-                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Data Completa de Início</label>
-                        <input 
-                          type="date" 
-                          required 
-                          value={newVacation.dataInicio} 
-                          onChange={e => setNewVacation(prev => ({ ...prev, dataInicio: e.target.value }))} 
-                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500" 
-                        />
+                          return (
+                            <div key={wire.code} className={`bg-zinc-950/40 border rounded-xl p-2.5 text-center flex flex-col justify-between items-center shadow-inner transition-colors backdrop-blur-md ${cardBorder}`}>
+                              <span className="text-xs font-black tracking-tight text-zinc-100">{wire.code}</span>
+                              <span className="text-[9px] font-bold text-zinc-400 font-mono mt-0.5">{getBitola(wire.label)}</span>
+                              <span className={`text-[8px] px-1.5 py-0.5 rounded-md border font-black uppercase my-1 truncate max-w-full ${badgeColor}`}>
+                                {isVerde ? 'Verde' : isVermelho ? 'Vermelho' : 'Natural'}
+                              </span>
+                              <span className="text-xs font-mono font-black text-sky-400">
+                                {accum.toFixed(3)} <span className="text-[9px] text-zinc-500 font-bold">Kg</span>
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
+                    </div>
+                  )}
 
-                      <div>
-                        <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1">Data Completa de Término</label>
-                        <input 
-                          type="date" 
-                          required 
-                          value={newVacation.dataFim} 
-                          onChange={e => setNewVacation(prev => ({ ...prev, dataFim: e.target.value }))} 
-                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500" 
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2 pt-2">
-                        <button type="submit" className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-[9px] uppercase tracking-wider rounded-xl transition-all shadow-lg">Confirmar e Cadastrar Férias</button>
-                      </div>
-                    </form>
-                  </div>
-
-                  <div className="bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 backdrop-blur-md grid grid-cols-1 md:grid-cols-2 gap-4">
-                    
-                    <div className="border-r border-zinc-800/80 pr-0 md:pr-4 flex flex-col">
-                      <div className="flex items-center justify-between border-b border-zinc-800/60 pb-2 mb-3">
-                        <span className="text-[11px] font-black text-yellow-500 uppercase tracking-wider">Férias ROCAL</span>
-                        <span className="text-[8px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">{rocalVacations.length} Ativos</span>
-                      </div>
-                      
-                      <div className="space-y-2 max-h-[180px] overflow-y-auto scrollbar-hide flex-1">
-                        {rocalVacations.length === 0 ? (
-                          <div className="text-center py-6 text-zinc-600">
-                            <p className="text-[9px] uppercase font-bold">Nenhum registro para ROCAL.</p>
+                  {/* SUBTÓPICO: SUGESTÕES RECEBIDAS */}
+                  {activeGestaoSubtab === 'sugestoes' && (
+                    <div className="bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 flex flex-col h-full min-h-[400px]">
+                      <h4 className="text-xs font-black uppercase text-zinc-400 tracking-wider mb-3 pb-1 border-b border-zinc-800">Histórico de Sugestões / Melhorias Registradas</h4>
+                      <div className="flex-1 overflow-y-auto max-h-[50vh] space-y-2 pr-1 scrollbar-hide">
+                        {suggestions.length === 0 ? (
+                          <div className="h-full flex flex-col items-center justify-center py-20 text-zinc-700 text-center">
+                            <Icon name="packageopen" className="w-8 h-8 mb-2 opacity-10" />
+                            <p className="text-[8px] font-black uppercase tracking-widest text-zinc-600">Nenhuma sugestão registrada até o momento.</p>
                           </div>
                         ) : (
-                          rocalVacations.map(v => (
-                            <div key={v.id} className="p-2.5 bg-zinc-900/40 rounded-xl border border-zinc-800/50 flex justify-between items-start">
-                              <div>
-                                <h4 className="text-[10px] font-black text-zinc-200">{v.nome}</h4>
-                                <span className="block text-[8px] text-zinc-500 font-bold uppercase">{v.cargo}</span>
-                                <div className="text-[9px] font-mono text-zinc-400 mt-1">
-                                  📅 {v.dataInicio.split('-').reverse().join('/')} até {v.dataFim.split('-').reverse().join('/')}
-                                </div>
+                          suggestions.map(sug => (
+                            <div key={sug.id} className="p-3 bg-zinc-900/30 rounded-xl border border-zinc-800 flex justify-between items-start gap-3">
+                              <div className="flex-1">
+                                <span className="text-[8px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">Registro: {sug.formattedDate} às {sug.formattedTime}</span>
+                                <p className="text-xs text-zinc-200 mt-1.5 whitespace-pre-wrap leading-relaxed">{sug.text}</p>
                               </div>
-                              <button onClick={() => removeVacationRecord(v.id)} className="text-zinc-600 hover:text-red-500 p-1 transition-colors">
-                                <Icon name="trash" className="w-3.5 h-3.5" />
-                              </button>
+                              <button onClick={() => removeSuggestion(sug.id)} className="text-zinc-600 hover:text-red-500 p-1.5 transition-colors" title="Excluir"><Icon name="trash" className="w-3.5 h-3.5" /></button>
                             </div>
                           ))
                         )}
                       </div>
                     </div>
+                  )}
 
-                    <div className="flex flex-col">
-                      <div className="flex items-center justify-between border-b border-zinc-800/60 pb-2 mb-3">
-                        <span className="text-[11px] font-black text-amber-500 uppercase tracking-wider">Férias RVD</span>
-                        <span className="text-[8px] bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-500 font-bold">{rvdVacations.length} Ativos</span>
+                  {/* SUBTÓPICO: ANOTAÇÕES GERAIS */}
+                  {activeGestaoSubtab === 'anotacoes' && (
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                      <div className="md:col-span-5 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 flex flex-col backdrop-blur-md">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Icon name="edit" className="w-4 h-4 text-amber-400" />
+                          <h3 className="text-xs font-black uppercase text-zinc-100 tracking-wider">Notas de Gestão e Planejamento</h3>
+                        </div>
+                        <p className="text-[10px] text-zinc-500 font-medium mb-3">Rascunhos, cronogramas de suprimentos e observações internas de turnos.</p>
+                        
+                        <div className="mb-3">
+                          <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Título da Nota</label>
+                          <input 
+                            type="text" 
+                            placeholder="Ex: Ajustar Turno B / Cronograma de fios" 
+                            value={noteTitle} 
+                            onChange={e => setNoteTitle(e.target.value)} 
+                            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold text-zinc-200 outline-none focus:ring-1 focus:ring-amber-500 placeholder-zinc-700 uppercase"
+                          />
+                        </div>
+
+                        <div className="mb-3 flex-1 flex flex-col">
+                          <label className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Conteúdo das Notas</label>
+                          <textarea 
+                            rows="6" 
+                            placeholder="Escreva aqui planos de produção, recados ou notas administrativas..." 
+                            value={noteContent} 
+                            onChange={e => setNewSuggestionText(e.target.value)} 
+                            className="w-full flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs font-medium text-zinc-200 focus:ring-1 focus:ring-amber-500 outline-none resize-none scrollbar-hide"
+                          ></textarea>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={handleSaveAdminNote} 
+                            className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-amber-500/10"
+                          >
+                            Salvar Notas de Gestão
+                          </button>
+                          {currentNoteId && (
+                            <button 
+                              onClick={startNewNote}
+                              className="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all border border-zinc-700/50"
+                            >
+                              Nova Nota
+                            </button>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="space-y-2 max-h-[180px] overflow-y-auto scrollbar-hide flex-1">
-                        {rvdVacations.length === 0 ? (
-                          <div className="text-center py-6 text-zinc-600">
-                            <p className="text-[9px] uppercase font-bold">Nenhum registro para RVD.</p>
-                          </div>
-                        ) : (
-                          rvdVacations.map(v => (
-                            <div key={v.id} className="p-2.5 bg-zinc-900/40 rounded-xl border border-zinc-800/50 flex justify-between items-start">
-                              <div>
-                                <h4 className="text-[10px] font-black text-zinc-200">{v.nome}</h4>
-                                <span className="block text-[8px] text-zinc-500 font-bold uppercase">{v.cargo}</span>
-                                <div className="text-[9px] font-mono text-zinc-400 mt-1">
-                                  📅 {v.dataInicio.split('-').reverse().join('/')} até {v.dataFim.split('-').reverse().join('/')}
+                      <div className="md:col-span-7 bg-zinc-950/40 p-5 rounded-3xl border border-zinc-800 flex flex-col h-full min-h-[300px] backdrop-blur-md">
+                        <span className="block text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-2">Notas Salvas (Clique no Título para Abrir)</span>
+                        <div className="space-y-1 max-h-[350px] overflow-y-auto scrollbar-hide flex-1">
+                          {adminNotesList.length === 0 ? (
+                            <div className="text-center py-4 text-zinc-700">
+                              <p className="text-[8px] uppercase font-bold">Nenhuma nota cadastrada até o momento.</p>
+                            </div>
+                          ) : (
+                            adminNotesList.map(note => (
+                              <div 
+                                key={note.id}
+                                onClick={() => loadNote(note)}
+                                className={`p-2.5 rounded-xl border flex justify-between items-center cursor-pointer transition-all ${
+                                  currentNoteId === note.id 
+                                    ? 'bg-amber-950/20 border-amber-500/50 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.1)]' 
+                                    : 'bg-zinc-900/40 border-zinc-800/60 text-zinc-300 hover:bg-zinc-900/80 hover:border-zinc-700'
+                                }`}
+                              >
+                                <span className="text-[10px] font-black uppercase truncate pr-2 flex-1">{note.title}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[8px] text-zinc-600 font-bold font-mono">
+                                    {new Date(note.timestamp).toLocaleDateString('pt-BR')}
+                                  </span>
+                                  <button 
+                                    onClick={(e) => handleDeleteAdminNote(note.id, e)}
+                                    className="text-zinc-600 hover:text-red-500 p-1 rounded-lg transition-colors"
+                                    title="Excluir nota"
+                                  >
+                                    <Icon name="trash" className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               </div>
-                              <button onClick={() => removeVacationRecord(v.id)} className="text-zinc-600 hover:text-red-500 p-1 transition-colors">
-                                <Icon name="trash" className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))
-                        )}
+                            ))
+                          )}
+                        </div>
                       </div>
                     </div>
-
-                  </div>
+                  )}
 
                 </div>
 
@@ -2117,6 +2213,7 @@
             )}
           </main>
 
+          {}
           <footer className="bg-[#0b0c10] border-t border-[#1a1d29] px-4 py-2 mt-auto text-center text-[10px] font-bold text-[#475569] tracking-wider uppercase">
             ROCAL ELETRÔNICA © 2026 | Sistema Integrado de Controle Operacional de Chão de Fábrica v5.0
           </footer>
