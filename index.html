@@ -897,7 +897,6 @@
         }));
       };
 
-      /* FIXED CRITICAL BUG IN LINE BELOW: changed parameter `index` to local scope identifier `idx` to prevent crash */
       const handleRemoveEditingRow = (lineName, idx) => {
         setEditingRecordData(prev => {
           const updated = [...prev[lineName]];
@@ -1296,19 +1295,9 @@
         if (!isCalendarModalOpen) return null;
         
         const year = 2026;
-        const months = [
-          { name: "Janeiro", days: 31, offset: 4 },
-          { name: "Fevereiro", days: 28, offset: 0 },
-          { name: "Março", days: 31, offset: 0 },
-          { name: "Abril", days: 30, offset: 3 },
-          { name: "Maio", days: 31, offset: 5 },
-          { name: "Junho", days: 30, offset: 1 },
-          { name: "Julho", days: 31, offset: 3 },
-          { name: "Agosto", days: 31, offset: 6 },
-          { name: "Setembro", days: 30, offset: 2 },
-          { name: "Outubro", days: 31, offset: 4 },
-          { name: "Novembro", days: 30, offset: 0 },
-          { name: "Dezembro", days: 31, offset: 2 }
+        const monthNames = [
+          "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+          "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
         ];
 
         return (
@@ -1322,22 +1311,30 @@
               </button>
 
               <div className="text-center mb-6">
-                <h2 className="text-3xl font-black text-yellow-400 tracking-wider">CALENDÁRIO INDUSTRIAL ROCAL {year}</h2>
-                <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Clique em qualquer lugar fora ou no botão fechar para sair</p>
+                <h2 className="text-2xl font-black text-yellow-400 tracking-wider">CALENDÁRIO INDUSTRIAL ROCAL {year}</h2>
+                <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Clique fora ou no botão fechar para sair</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {months.map((m, mIdx) => {
+                {monthNames.map((mName, mIdx) => {
+                  // Determina dinamicamente a estrutura de cada mês para o ano de 2026
+                  const firstDay = new Date(year, mIdx, 1);
+                  const lastDay = new Date(year, mIdx + 1, 0);
+                  const daysInMonth = lastDay.getDate();
+                  const startOffset = firstDay.getDay(); // 0 = Domingo, 1 = Segunda, etc.
+
                   const dayElements = [];
-                  for (let i = 0; i < m.offset; i++) {
-                    dayElements.push(<div key={`empty-${i}`} className="w-6 h-6"></div>);
+                  // Gera os blocos de espaçamento vazios que alinham o início do mês ao dia correto
+                  for (let i = 0; i < startOffset; i++) {
+                    dayElements.push(<div key={`empty-${mIdx}-${i}`} className="w-7 h-7"></div>);
                   }
-                  for (let d = 1; d <= m.days; d++) {
+                  // Gera os dias numerados reais do mês
+                  for (let d = 1; d <= daysInMonth; d++) {
                     const isToday = currentDateTime.getDate() === d && currentDateTime.getMonth() === mIdx && currentDateTime.getFullYear() === year;
                     dayElements.push(
                       <div 
-                        key={`day-${d}`} 
-                        className={`w-6.5 h-6.5 flex items-center justify-center text-[10px] font-black rounded-md ${
+                        key={`day-${mIdx}-${d}`} 
+                        className={`w-7 h-7 flex items-center justify-center text-[10px] font-black rounded-md ${
                           isToday 
                             ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/20 font-black animate-pulse' 
                             : 'text-zinc-300 hover:bg-zinc-800'
@@ -1349,12 +1346,12 @@
                   }
 
                   return (
-                    <div key={m.name} className="bg-zinc-900/60 border border-zinc-800/80 p-3 rounded-2xl flex flex-col items-center">
-                      <h3 className="text-xs font-black text-sky-400 uppercase tracking-widest mb-2 border-b border-zinc-800 pb-1 w-full text-center">{m.name}</h3>
+                    <div key={mName} className="bg-zinc-900/60 border border-zinc-800/80 p-3 rounded-2xl flex flex-col items-center">
+                      <h3 className="text-xs font-black text-sky-400 uppercase tracking-widest mb-2 border-b border-zinc-800 pb-1 w-full text-center">{mName}</h3>
                       <div className="grid grid-cols-7 gap-1 text-[8px] font-bold text-zinc-500 mb-1 w-full text-center">
                         <div>D</div><div>S</div><div>T</div><div>Q</div><div>Q</div><div>S</div><div>S</div>
                       </div>
-                      <div className="grid grid-cols-7 gap-1 text-center">
+                      <div className="grid grid-cols-7 gap-1 text-center justify-items-center">
                         {dayElements}
                       </div>
                     </div>
@@ -1797,27 +1794,28 @@
             </div>
           )}
 
-          {/* HEADER */}
+          {}
           <header className="bg-zinc-950 border-b border-zinc-800 static sm:sticky top-0 z-40 backdrop-blur-md">
             <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-5">
                 {/* LOGO AREA */}
-                <div className="relative w-20 h-20 flex items-center justify-center">
+                <div className="relative w-16 h-16 flex items-center justify-center">
                   <div className="absolute inset-0 border-4 border-dashed border-amber-500 rounded-full animate-spin-fast shadow-[0_0_15px_rgba(245,158,11,0.5)]"></div>
                   <div className="absolute inset-2 border-2 border-dotted border-sky-400 rounded-full animate-spin-reverse-medium shadow-[0_0_10px_rgba(56,189,248,0.4)]"></div>
                   
-                  <div className="w-13 h-13 bg-zinc-300 rounded-full flex items-center justify-center shadow-lg border border-zinc-500 relative overflow-hidden z-10">
-                    <div className="flex items-center justify-center font-black italic tracking-tighter text-[28px] leading-none select-none">
-                      <span className="text-black transform -skew-x-12 translate-x-1 z-10 font-black">R</span>
+                  <div className="w-10 h-10 bg-zinc-300 rounded-full flex items-center justify-center shadow-lg border border-zinc-500 relative overflow-hidden z-10">
+                    <div className="flex items-center justify-center font-black italic tracking-tighter text-[22px] leading-none select-none">
+                      <span className="text-black transform -skew-x-12 translate-x-0.5 z-10 font-black">R</span>
                       <span className="text-yellow-500 transform -skew-x-12 -translate-x-0.5 font-black drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)]">E</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tighter leading-tight uppercase font-serif">
-                    <span className="text-yellow-400 font-serif font-black">ROCAL</span> <span className="text-zinc-200 font-sans font-black">ELETRÔNICA</span>
+                  {/* AJUSTE DO TAMANHO DA FONTE DA MARCA - IMAGEM image_af80d9.png */}
+                  <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight leading-none uppercase">
+                    <span className="text-yellow-400 font-black">ROCAL</span> <span className="text-zinc-200 font-black">ELETRÔNICA</span>
                   </h1>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.25em] mt-0.5">Industrial Production Systems</p>
+                  <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-[0.2em] mt-1">Industrial Production Systems</p>
                 </div>
               </div>
               
@@ -1843,18 +1841,19 @@
 
                 <div className="hidden sm:block h-8 w-px bg-zinc-800"></div>
 
+                {/* AJUSTE DE DATA E HORA DO CABEÇALHO - IMAGEM image_af83e0.png */}
                 <div 
                   onClick={() => setIsCalendarModalOpen(true)}
-                  className="flex flex-col items-center justify-center bg-zinc-900 hover:bg-zinc-850 px-6 py-3 rounded-2xl border border-zinc-800 cursor-pointer transition-all min-w-[180px] shadow-lg group active:scale-95 select-none"
+                  className="flex flex-col items-center justify-center bg-zinc-900 hover:bg-zinc-850 px-4 py-2.5 rounded-xl border border-zinc-800 cursor-pointer transition-all min-w-[140px] shadow-lg group active:scale-95 select-none animate-pulse-slow"
                   title="Clique para ver o calendário anual completo de 2026"
                 >
-                  <div className="flex items-center gap-2 text-yellow-400 font-mono font-black text-lg tracking-widest leading-none group-hover:scale-105 transition-transform">
-                    <Icon name="clock" className="w-4 h-4 text-zinc-400" />
+                  <div className="flex items-center gap-1.5 text-yellow-400 font-mono font-bold text-sm tracking-wide leading-none group-hover:scale-105 transition-transform">
+                    <Icon name="clock" className="w-3.5 h-3.5 text-zinc-500" />
                     <span>{currentDateTime.toLocaleTimeString('pt-BR')}</span>
                   </div>
-                  <div className="h-px bg-zinc-800 w-full my-2"></div>
-                  <div className="flex items-center gap-2 text-sky-400 font-mono font-black text-lg tracking-widest leading-none group-hover:scale-105 transition-transform">
-                    <Icon name="calendar" className="w-4 h-4 text-zinc-400" />
+                  <div className="h-px bg-zinc-850 w-full my-1.5"></div>
+                  <div className="flex items-center gap-1.5 text-sky-400 font-mono font-bold text-sm tracking-wide leading-none group-hover:scale-105 transition-transform">
+                    <Icon name="calendar" className="w-3.5 h-3.5 text-zinc-500" />
                     <span>{currentDateTime.toLocaleDateString('pt-BR')}</span>
                   </div>
                 </div>
@@ -1890,6 +1889,7 @@
             </div>
           </nav>
 
+          {}
           <main className="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col justify-start">
             
             {/* ================= ABA: LANÇAMENTO ================= */}
@@ -1974,8 +1974,8 @@
 
                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border tracking-wider uppercase ${
                               isTransferido 
-                                ? 'bg-emerald-950 text-emerald-400 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' 
-                                : 'bg-red-950 text-red-500 border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.3)] animate-pulse'
+                                ? 'bg-emerald-950 text-emerald-400 border-emerald-550 shadow-[0_0_8px_rgba(16,185,129,0.3)]' 
+                                : 'bg-red-950 text-red-550 border-red-550 shadow-[0_0_8px_rgba(239,68,68,0.3)] animate-pulse'
                             }`}>
                               {isTransferido ? '✓ TRANSFERIDO' : '✗ NÃO ENVIADO'}
                             </span>
@@ -2086,7 +2086,6 @@
                                         onChange={e => handleEditingInputChange(line, idx, 'quantidade', e.target.value)}
                                         className="w-24 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-zinc-200 outline-none font-bold"
                                       />
-                                      {/* FIXED CRITICAL RUNTIME BUG BY PASSING `idx` CORRECLTY */}
                                       <button 
                                         onClick={() => handleRemoveEditingRow(line, idx)} 
                                         className="p-1.5 text-zinc-600 hover:text-red-500 transition-colors"
@@ -2134,7 +2133,7 @@
 
                         {!isEditingRecord && (
                           <div className="pt-4 flex justify-end">
-                            <button onClick={e => requestDeleteRecord(activeRecord.id, e)} className="text-[9px] font-black text-red-900 hover:text-red-500 uppercase transition-colors">Excluir Lote</button>
+                            <button onClick={e => requestDeleteRecord(activeRecord.id, e)} className="text-[9px] font-black text-red-900 hover:text-red-550 uppercase transition-colors">Excluir Lote</button>
                           </div>
                         )}
                       </div>
@@ -2272,7 +2271,7 @@
                   {isAdminUser && wireHistory.length > 0 && (
                     <button 
                       onClick={handleClearAllScrapHistory}
-                      className="w-full py-2.5 bg-red-950/40 text-red-400 hover:bg-red-500 hover:text-zinc-950 border border-red-900/40 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all mt-4 shadow-lg"
+                      className="w-full py-2.5 bg-red-950/40 text-red-400 hover:bg-red-550 hover:text-zinc-950 border border-red-900/40 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all mt-4 shadow-lg"
                     >
                       ⚠️ Excluir Todo Histórico de Descartes
                     </button>
@@ -2338,7 +2337,7 @@
                         const statusConfig = {
                           'STANDBY': { bg: 'bg-amber-950/30 text-amber-400 border-amber-500/30', label: 'STANDBY' },
                           'ENVIADO': { bg: 'bg-blue-950/30 text-blue-400 border-blue-500/30', label: 'ENVIADO' },
-                          'REALIZADO': { bg: 'bg-emerald-950/30 text-emerald-400 border-emerald-500/30', label: 'REALIZADO' }
+                          'REALIZADO': { bg: 'bg-emerald-950/30 text-emerald-400 border-emerald-550/30', label: 'REALIZADO' }
                         }[os.status] || { bg: 'bg-zinc-800 text-zinc-400', label: 'INDEFINIDO' };
 
                         return (
@@ -2599,7 +2598,7 @@
                                         className={`px-3 py-1 rounded-xl text-[9px] font-black tracking-widest transition-all shadow-md active:scale-95 border ${
                                           v.status === 'CONFIRMADA' 
                                             ? 'bg-emerald-950/80 text-emerald-450 border-emerald-550 hover:bg-emerald-900' 
-                                            : 'bg-amber-950/80 text-amber-450 border-amber-550 hover:bg-amber-900'
+                                            : 'bg-amber-950/80 text-amber-455 border-amber-550 hover:bg-amber-900'
                                         }`}
                                         title="Clique para alternar o status instantaneamente"
                                       >
@@ -2652,8 +2651,8 @@
                                         onClick={() => toggleVacationStatus(v.id)}
                                         className={`px-3 py-1 rounded-xl text-[9px] font-black tracking-widest transition-all shadow-md active:scale-95 border ${
                                           v.status === 'CONFIRMADA' 
-                                            ? 'bg-emerald-950/80 text-emerald-450 border-emerald-550 hover:bg-emerald-900' 
-                                            : 'bg-amber-950/80 text-amber-450 border-amber-550 hover:bg-amber-900'
+                                            ? 'bg-emerald-950/80 text-emerald-450 border-emerald-555 hover:bg-emerald-900' 
+                                            : 'bg-amber-950/80 text-amber-455 border-amber-555 hover:bg-amber-900'
                                         }`}
                                         title="Clique para alternar o status instantaneamente"
                                       >
@@ -2876,7 +2875,7 @@
 
           {/* FOOTER */}
           <footer className="bg-[#0b0c10] border-t border-[#1a1d29] px-4 py-2 mt-auto text-center text-[10px] font-bold text-[#475569] tracking-wider uppercase">
-            ROCAL ELETRÔNICA © 2026 | Sistema Integrado de Controle Operacional de Chão de Fábrica v5.5
+            ROCAL ELETRÔNICA © 2026 | Sistema Integrado de Controle Operacional de Chão de Fábrica v5.6
           </footer>
 
           {/* TEMPLATES PDF */}
@@ -2884,7 +2883,7 @@
             <div ref={reportRef} style={{ padding: '30px', color: '#18181b', fontFamily: 'sans-serif' }}>
               {activeRecord && (
                 <div style={{ border: '2px solid #e4e4e7', padding: '30px', borderRadius: '14px' }}>
-                  <div style={{ display: 'flex', style: 'justify-between', alignItems: 'center', borderBottom: '2px solid #27272a', paddingBottom: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #27272a', paddingBottom: '15px' }}>
                     <div>
                       <h1 style={{ fontSize: '24px', fontWeight: '900', margin: 0 }}>ROCAL ELETRÔNICA</h1>
                       <p style={{ fontSize: '10px', color: '#71717a', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '1px' }}>Sistemas Industriais de Produção</p>
@@ -3007,9 +3006,5 @@
 </body>
 </html>
 ```
-eof
 
-### Summary of Actions Taken:
-1. **GitHub Deploy Fix**: Explained how to resolve the permissions error in the GitHub settings under *Actions > General > Workflow permissions* (setting it to **Read and write**).
-2. **Critical Bug Resolution**: Fixed a runtime error in the editing template's delete action where an undefined `index` was being passed into `handleRemoveEditingRow` instead of the correct mapping key `idx`.
-3. **Complete Unified Build**: Provided the 100% complete and self-contained single-file code structure so you can overwrite your repository file and have a robust, fully-functioning application immediately.
+
